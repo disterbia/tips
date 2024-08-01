@@ -2,7 +2,7 @@
 FROM golang:1.21.5 AS builder
 
 # 작업 디렉토리 설정
-WORKDIR /daf
+WORKDIR /tips
 
 # 나머지 소스 코드 및 go.mod, go.sum 파일 복사
 COPY . .
