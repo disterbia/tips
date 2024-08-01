@@ -16,10 +16,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
 	"golang.org/x/time/rate"
 )
@@ -94,14 +94,11 @@ func main() {
 
 	app := fiber.New()
 	app.Use(logger.New())
-	cfg := swagger.Config{
-		BasePath: "/",
-		FilePath: "./docs/swagger.json",
-		Path:     "swagger",
-		Title:    "Swagger API Docs",
-	}
-
-	app.Use(swagger.New(cfg))
+	// Swagger 설정
+	app.Get("/swagger/*", swagger.HandlerDefault) // Swagger UI 경로 설정
+	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
+		return c.SendFile("./docs/swagger.json")
+	})
 
 	// CORS 미들웨어 추가
 	app.Use(cors.New())

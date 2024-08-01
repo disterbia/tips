@@ -8,10 +8,10 @@ import (
 	_ "inquire-service/docs"
 	"inquire-service/model"
 
-	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -46,14 +46,12 @@ func main() {
 
 	app := fiber.New()
 	app.Use(logger.New())
-	cfg := swagger.Config{
-		BasePath: "/",
-		FilePath: "./docs/swagger.json",
-		Path:     "swagger",
-		Title:    "Swagger API Docs",
-	}
 
-	app.Use(swagger.New(cfg))
+	// Swagger 설정
+	app.Get("/swagger/*", swagger.HandlerDefault) // Swagger UI 경로 설정
+	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
+		return c.SendFile("./docs/swagger.json")
+	})
 
 	// CORS 미들웨어 추가
 	app.Use(cors.New())
@@ -66,6 +64,6 @@ func main() {
 	app.Get("/get-inquires", core.GetHandler(getEndpoint))
 	app.Get("/all-inquires", core.GetAllHandler(allEndpoint))
 
-	log.Fatal(app.Listen(":44409"))
+	log.Fatal(app.Listen(":44410"))
 
 }

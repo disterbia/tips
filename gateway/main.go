@@ -72,11 +72,22 @@ func main() {
 	app.Use(IPRateLimitMiddleware())
 
 	// 서비스로의 리버스 프록시 설정
+	setupProxy(app, "/user/*", "http://user:44409")
+	setupProxy(app, "/inquire/*", "http://inquire:44410")
 
-	setupProxy(app, "/user/*", "http://localhost:44409")
-
-	setupSwaggerUIProxy(app, "/user-service/swagger/*", "http://localhost:44409/swagger")
-	setupSwaggerFileProxy(app, "/docs/*", "http://localhost:44409/docs")
+	// Swagger UI 프록시 설정
+	setupSwaggerUIProxy(app, "/user-service/swagger/*", "http://user:44409/swagger")
+	setupSwaggerUIProxy(app, "/inquire-service/swagger/*", "http://inquire:44410/swagger")
+	// Swagger JSON 파일 리다이렉트
+	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
+		referer := c.Get("Referer")
+		if strings.Contains(referer, "/user-service/") {
+			return c.Redirect("/user-service/swagger/doc.json")
+		} else if strings.Contains(referer, "/inquire-service/") {
+			return c.Redirect("/inquire-service/swagger/doc.json")
+		}
+		return c.SendStatus(fiber.StatusNotFound)
+	})
 	// API 게이트웨이 서버 시작
 	app.Listen(":50000")
 }
@@ -84,7 +95,6 @@ func main() {
 // 서비스로의 리버스 프록시 설정 함수
 func setupProxy(app *fiber.App, path string, target string) {
 	app.All(path, func(c *fiber.Ctx) error {
-		// 원본 경로에서 기본 경로(예: "/user")를 제거
 		originalPath := c.Params("*")
 		targetURL := target + "/" + originalPath
 		return proxy.Do(c, targetURL)
@@ -92,17 +102,6 @@ func setupProxy(app *fiber.App, path string, target string) {
 }
 
 func setupSwaggerUIProxy(app *fiber.App, path string, target string) {
-	app.All(path, func(c *fiber.Ctx) error {
-		originalPath := c.Params("*")
-		targetURL := target
-		if originalPath != "" {
-			targetURL += "/" + originalPath
-		}
-		return proxy.Do(c, targetURL)
-	})
-}
-
-func setupSwaggerFileProxy(app *fiber.App, path string, target string) {
 	app.All(path, func(c *fiber.Ctx) error {
 		originalPath := c.Params("*")
 		targetURL := target
