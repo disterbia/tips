@@ -22,6 +22,6 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu
-            docker-compose pull && docker-compose up -d
+            docker-compose -f docker-compose-tips.yml pull && docker-compose -f docker-compose-tips.yml up -d
             docker image prune -f   
           debug: true
