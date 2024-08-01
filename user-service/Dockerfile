@@ -35,6 +35,8 @@ WORKDIR /tips
 COPY --from=builder /tips/user-service .
 # .env 파일 복사 추가
 COPY --from=builder /tips/.env .
+# Swagger 문서 복사
+COPY --from=builder /tips/docs ./docs
 
 # 애플리케이션 실행
 CMD ["./user-service"]

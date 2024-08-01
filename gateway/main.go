@@ -89,7 +89,7 @@ func main() {
 		return c.SendStatus(fiber.StatusNotFound)
 	})
 	// API 게이트웨이 서버 시작
-	app.Listen(":50000")
+	app.Listen(":40000")
 }
 
 // 서비스로의 리버스 프록시 설정 함수
