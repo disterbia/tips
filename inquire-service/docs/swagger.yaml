@@ -1,0 +1,334 @@
+definitions:
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
+  core.ErrorResponse:
+    properties:
+      err:
+        description: wwwwww
+        type: string
+    type: object
+  core.InquireReplyRequest:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+      inquire_id:
+        type: integer
+      reply_type:
+        type: boolean
+    required:
+    - content
+    type: object
+  core.InquireReplyResponse:
+    properties:
+      content:
+        type: string
+      created:
+        example: 'YYYY-mm-dd HH:mm:ss '
+        type: string
+      id:
+        type: integer
+      inquire_id:
+        type: integer
+      reply_type:
+        type: boolean
+    type: object
+  core.InquireRequest:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+      email:
+        type: string
+      title:
+        maxLength: 50
+        type: string
+    required:
+    - content
+    - email
+    - title
+    type: object
+  core.InquireResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        example: YYYY-mm-dd HH:mm:ss
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      replies:
+        items:
+          $ref: '#/definitions/core.InquireReplyResponse'
+        type: array
+      title:
+        type: string
+    type: object
+  core.SuccessResponse:
+    properties:
+      jwt:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /admin-login:
+    post:
+      consumes:
+      - application/json
+      description: 관리자 로그인시 호출
+      parameters:
+      - description: email
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      - description: password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 JWT 토큰 반환
+          schema:
+            $ref: '#/definitions/core.SuccessResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      security:
+      - jwt: []
+      summary: 관리자 로그인
+      tags:
+      - 로그인 /inquire
+  /all-inquires:
+    get:
+      description: 관리자 문의내역 확인시 호출 (30개씩)
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 페이지 번호 default 0
+        in: query
+        name: page
+        type: integer
+      - description: 시작날짜 yyyy-mm-dd
+        in: query
+        name: start_date
+        type: string
+      - description: 종료날짜 yyyy-mm-dd
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 문의내역 배열 반환
+          schema:
+            items:
+              $ref: '#/definitions/core.InquireResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 문의조회(관리자)
+      tags:
+      - 문의 /inquire
+  /get-inquires:
+    get:
+      consumes:
+      - application/json
+      description: 나의문의보기시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 페이지 번호 default 0
+        in: query
+        name: page
+        type: integer
+      - description: 시작날짜 yyyy-mm-dd
+        in: query
+        name: start_date
+        type: string
+      - description: 종료날짜 yyyy-mm-dd
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 문의내역 배열 반환
+          schema:
+            items:
+              $ref: '#/definitions/core.InquireResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 문의조회(본인)
+      tags:
+      - 문의 /inquire
+  /inquire-reply:
+    post:
+      consumes:
+      - application/json
+      description: 답변/추가문의 등록시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO - 답변데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.InquireReplyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 답변/추가문의
+      tags:
+      - 문의 /inquire
+  /remove-inquire/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 문의삭제시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 문의ID
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 문의삭제
+      tags:
+      - 문의 /inquire
+  /remove-reply/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 문의답변/추가문의 삭제시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 답변/추가문의ID
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 문의답변/추가문의 삭제
+      tags:
+      - 문의 /inquire
+  /send-inquire:
+    post:
+      consumes:
+      - application/json
+      description: 문의등록시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO - 문의데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.InquireRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 문의하기
+      tags:
+      - 문의 /inquire
+swagger: "2.0"

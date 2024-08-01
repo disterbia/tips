@@ -1,0 +1,282 @@
+definitions:
+  core.AutoLoginRequest:
+    properties:
+      device_id:
+        type: string
+      fcm_token:
+        type: string
+    type: object
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
+  core.ErrorResponse:
+    properties:
+      err:
+        type: string
+    type: object
+  core.LoginRequest:
+    properties:
+      birthday:
+        example: yyyy-mm-dd
+        type: string
+      device_id:
+        type: string
+      fcm_token:
+        type: string
+      gender:
+        type: boolean
+      id_token:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      user_type:
+        type: integer
+    type: object
+  core.PhoneLoginRequest:
+    properties:
+      birthday:
+        example: yyyy-mm-dd
+        type: string
+      device_id:
+        type: string
+      fcm_token:
+        type: string
+      gender:
+        type: boolean
+      name:
+        type: string
+      phone:
+        type: string
+      user_type:
+        type: integer
+    type: object
+  core.SuccessResponse:
+    properties:
+      jwt:
+        type: string
+    type: object
+  core.UserRequest:
+    properties:
+      birthday:
+        example: yyyy-mm-dd
+        type: string
+      gender:
+        type: boolean
+      name:
+        type: string
+      phone:
+        type: string
+      profile_image:
+        example: base64string
+        type: string
+      user_type:
+        type: integer
+    type: object
+  core.VerifyRequest:
+    properties:
+      code:
+        example: 인증번호 6자리
+        type: string
+      phone_number:
+        example: "01000000000"
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /auto-login:
+    post:
+      consumes:
+      - application/json
+      description: 최초 로그인 이후 앱 실행시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.AutoLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 JWT 토큰 반환
+          schema:
+            $ref: '#/definitions/core.SuccessResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      security:
+      - jwt: []
+      summary: 자동로그인
+      tags:
+      - 로그인 /user
+  /phone-login:
+    post:
+      consumes:
+      - application/json
+      description: 휴대번호 로그인시 호출
+      parameters:
+      - description: '요청 DTO user- user_type: 0:해당없음, 1~6:파킨슨 환자, 10:보호자 / 최초 로그인
+          이후 로그인시 phone,fcm_token,device_id 만 필요함'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.PhoneLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 JWT 토큰 반환
+          schema:
+            $ref: '#/definitions/core.SuccessResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 인증필요 , "-2" = 이미 가입한 번호,  "-3"
+            = 추가정보 입력 필요'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 휴대번호 로그인
+      tags:
+      - 로그인 /user
+  /send-code/{number}:
+    post:
+      consumes:
+      - application/json
+      description: 인증번호 발송시 호출
+      parameters:
+      - description: 휴대번호
+        in: path
+        name: number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 이미 가입한번호'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 인증번호 발송
+      tags:
+      - 인증번호 /user
+  /sns-login:
+    post:
+      consumes:
+      - application/json
+      description: sns 로그인 성공시 호출
+      parameters:
+      - description: '요청 DTO - idToken 필수, user- user_type: 0:해당없음, 1~6:파킨슨 환자, 10:보호자
+          / 최초 로그인 이후 로그인시 fcm_token,device_id 만 필요함'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 JWT 토큰 반환
+          schema:
+            $ref: '#/definitions/core.SuccessResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 인증필요 , "-2" = 이미 가입한 번호,  "-3"
+            = 추가정보 입력 필요'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: sns 로그인
+      tags:
+      - 로그인 /user
+  /update-user:
+    post:
+      consumes:
+      - application/json
+      description: 내정보 변경시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO - 업데이트 할 데이터/ ture:남성 user_Type- 0:해당없음 1:파킨슨 환자 2:보호자
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.UserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 번호인증 필요'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 내정보 변경
+      tags:
+      - 마이페이지 /user
+  /verify-code:
+    post:
+      consumes:
+      - application/json
+      description: 인증번호 입력 후 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.VerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 코드불일치'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 번호 인증
+      tags:
+      - 인증번호 /user
+swagger: "2.0"
