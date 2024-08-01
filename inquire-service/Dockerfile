@@ -37,4 +37,4 @@ COPY --from=builder /tips/inquire-service .
 COPY --from=builder /tips/.env .
 
 # 애플리케이션 실행
-CMD ["./coach-service"]
+CMD ["./inqire-service"]

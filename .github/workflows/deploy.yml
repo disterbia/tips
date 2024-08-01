@@ -22,6 +22,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu
-            docker-compose -f docker-compose-tips.yml pull && docker-compose -f docker-compose-tips.yml up -d
+            docker-compose -p tips -f docker-compose-tips.yml pull
+            docker-compose -p tips -f docker-compose-tips.yml up -d --remove-orphans
             docker image prune -f   
           debug: true
