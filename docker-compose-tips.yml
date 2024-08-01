@@ -25,4 +25,4 @@ services:
 
 networks:
   default:
-    name: my-network
+    name: tips-network
