@@ -258,9 +258,9 @@ func LinkHandler(endpoint endpoint.Endpoint) fiber.Handler {
 // @Accept  json
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Success 200 {object} dto.BasicResponse "성공시 200 반환"
-// @Failure 400 {object} dto.ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Failure 500 {object} dto.ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Success 200 {object} BasicResponse "성공시 200 반환"
+// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Router /remove-user [post]
 func RemoveHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
