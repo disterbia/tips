@@ -34,4 +34,4 @@ COPY --from=builder /tips/firebase-adminkey.json .
 
 
 # 애플리케이션 실행
-CMD ["./tips-service"]
+CMD ["./fcm-service"]
