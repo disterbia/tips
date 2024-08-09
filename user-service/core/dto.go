@@ -53,6 +53,7 @@ type UserResponse struct {
 	Phone        string           `json:"phone"`
 	Gender       bool             `json:"gender"` // true:남 false: 여
 	SnsType      uint             `json:"sns_type"`
+	CreatedAt    string           `json:"created_at"`
 	ProfileImage ImageResponse    `json:"profile_image"`
 	LinkedEmails []LinkedResponse `json:"linked_emails"`
 }

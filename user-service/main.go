@@ -3,9 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
-	"sync"
-	"time"
 	"user-service/core"
 
 	_ "user-service/docs"
@@ -21,41 +18,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
-	"golang.org/x/time/rate"
 )
 
-var ipLimiters = make(map[string]*rate.Limiter)
-var ipLimitersMutex sync.Mutex
-
-func getClientIP(c *fiber.Ctx) string {
-	if ip := c.Get("X-Real-IP"); ip != "" {
-		return ip
-	}
-	if ip := c.Get("X-Forwarded-For"); ip != "" {
-		return strings.Split(ip, ",")[0]
-	}
-	return c.IP()
-}
-
-func RateLimitMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		ip := getClientIP(c)
-
-		ipLimitersMutex.Lock()
-		limiter, exists := ipLimiters[ip]
-		if !exists {
-			limiter = rate.NewLimiter(rate.Every(time.Hour/10), 10)
-			ipLimiters[ip] = limiter
-		}
-		ipLimitersMutex.Unlock()
-
-		if !limiter.Allow() {
-			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "요청 횟수 초과"})
-		}
-
-		return c.Next()
-	}
-}
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -109,7 +73,7 @@ func main() {
 	app.Post("/sns-login", core.SnsLoginHandler(loginEndpoint))
 	app.Post("/phone-login", core.PhoneLoginHandler(phoneLoginEndpoint))
 	app.Post("/auto-login", core.AutoLoginHandler(autoLoginEndpoint))
-	app.Post("/send-code/:email", RateLimitMiddleware(), core.SendCodeHandler(sendCodeEndpoint))
+	app.Post("/send-code/:number", core.SendCodeHandler(sendCodeEndpoint))
 	app.Post("/verify-code", core.VerifyHandler(verifyEndpoint))
 	app.Post("/update-user", core.UpdateUserHandler(updateEndpoint))
 	app.Post("/link-email", core.LinkHandler(linkEndpoint))

@@ -2,13 +2,27 @@ package core
 
 import (
 	"context"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/time/rate"
 )
 
-var userLocks sync.Map
+var ipLimiters = make(map[string]*rate.Limiter)
+var ipLimitersMutex sync.Mutex
+
+func getClientIP(c *fiber.Ctx) string {
+	if ip := c.Get("X-Real-IP"); ip != "" {
+		return ip
+	}
+	if ip := c.Get("X-Forwarded-For"); ip != "" {
+		return strings.Split(ip, ",")[0]
+	}
+	return c.IP()
+}
 
 // @Tags 로그인 /user
 // @Summary sns 로그인
@@ -111,12 +125,32 @@ func AutoLoginHandler(autoLoginEndpoint endpoint.Endpoint) fiber.Handler {
 // @Router /send-code/{number} [post]
 func SendCodeHandler(sendEndpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		number := c.Params("email")
+		number := c.Params("number")
 
+		// IP 주소를 가져오기 위한 함수 호출
+		ip := getClientIP(c)
+
+		ipLimitersMutex.Lock()
+		limiter, exists := ipLimiters[ip]
+		if !exists {
+			limiter = rate.NewLimiter(rate.Every(24*time.Hour), 10)
+			ipLimiters[ip] = limiter
+		}
+		ipLimitersMutex.Unlock()
+
+		// 요청이 허용되지 않으면 에러 반환
+		if !limiter.Allow() {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "요청 횟수 초과"})
+		}
 		response, err := sendEndpoint(c.Context(), number)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
+
+		// 응답이 성공적이면 RateLimiter를 업데이트
+		ipLimitersMutex.Lock()
+		limiter.Allow()
+		ipLimitersMutex.Unlock()
 
 		resp := response.(BasicResponse)
 		return c.Status(fiber.StatusOK).JSON(resp)

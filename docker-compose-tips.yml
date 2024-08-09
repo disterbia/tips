@@ -1,5 +1,7 @@
 version: '3.8'
 services:
+  nats:
+    image: nats:latest
   gateway:
     image: disterbia94/tips-gateway:latest
     environment:
@@ -10,6 +12,11 @@ services:
       - inquire
       - email
       - user
+      - nats
+      - fcm
+      - medicine
+      - notification
+    
   inquire:
     image: disterbia94/tips-inquire-service:latest
     environment:
@@ -20,6 +27,18 @@ services:
       - TZ=Asia/Seoul
   user:
     image: disterbia94/tips-user-service:latest
+    environment:
+      - TZ=Asia/Seoul
+  medicine:
+    image: disterbia94/tips-medicine-service:latest
+    environment:
+      - TZ=Asia/Seoul
+  notification:
+    image: disterbia94/tips-notification-service:latest
+    environment:
+      - TZ=Asia/Seoul
+  fcm:
+    image: disterbia94/tips-fcm-service:latest
     environment:
       - TZ=Asia/Seoul
 

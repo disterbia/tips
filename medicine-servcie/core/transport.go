@@ -10,50 +10,17 @@ import (
 
 var userLocks sync.Map
 
-// @Tags 로그인 /inquire
-// @Summary 관리자 로그인
-// @Description 관리자 로그인시 호출
-// @Accept  json
-// @Produce  json
-// @Param email body string true "email"
-// @Param password body string true "password"
-// @Success 200 {object} SuccessResponse "성공시 JWT 토큰 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /admin-login [post]
-func AdminLoginHandler(endpoint endpoint.Endpoint) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var req map[string]interface{}
-		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
-		email := req["email"].(string)
-		password := req["password"].(string)
-		response, err := endpoint(c.Context(), map[string]interface{}{
-			"email":    email,
-			"password": password,
-		})
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-
-		}
-
-		resp := response.(LoginResponse)
-		return c.Status(fiber.StatusOK).JSON(resp)
-	}
-}
-
-// @Tags 문의 /inquire
-// @Summary 답변/추가문의
-// @Description 답변/추가문의 등록시 호출
-// @Accept  json
+// @Tags 약물 /medicine
+// @Summary 약물 저장
+// @Description 약물등록 및 수정시 호출 - 생성시 id생략
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Param request body InquireReplyRequest true "요청 DTO - 답변데이터"
+// @Param request body MedicineRequest true "요청 DTO - 약물데이터"
 // @Success 200 {object} BasicResponse "성공시 200 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /inquire-reply [post]
-func AnswerHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// @Router /save-medicine [post]
+func SaveHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := verifyJWT(c)
 		if err != nil {
@@ -62,37 +29,124 @@ func AnswerHandler(endpoint endpoint.Endpoint) fiber.Handler {
 
 		// 사용자별 잠금 시작
 		if _, loaded := userLocks.LoadOrStore(id, true); loaded {
-			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "Concurrent request detected"})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Concurrent request detected"})
 		}
 		defer userLocks.Delete(id)
-		var req InquireReplyRequest
+
+		var req MedicineRequest
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
-
 		req.Uid = id
 		response, err := endpoint(c.Context(), req)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-
 		}
+
 		resp := response.(BasicResponse)
 		return c.Status(fiber.StatusOK).JSON(resp)
 	}
 }
 
-// @Tags 문의 /inquire
-// @Summary 문의하기
-// @Description 문의등록시 호출
+// @Tags 약물 /medicine
+// @Summary 약물 삭제
+// @Description 약물 삭제시 호출
 // @Accept  json
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Param request body InquireRequest true "요청 DTO - 문의데이터"
+// @Param id path string ture "약물 ID"
 // @Success 200 {object} BasicResponse "성공시 200 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /send-inquire [post]
-func SendHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// @Router /remove-medicine/{id} [post]
+func RemoveHandler(endpoint endpoint.Endpoint) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id, err := verifyJWT(c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+		mediId := c.Params("id")
+		mid, err := strconv.Atoi(mediId)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+		response, err := endpoint(c.Context(), map[string]interface{}{
+			"uid": id,
+			"id":  uint(mid),
+		})
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		resp := response.(BasicResponse)
+		return c.Status(fiber.StatusOK).JSON(resp)
+
+	}
+}
+
+// @Tags 약물 /medicine
+// @Summary 약물 복용내역 조회
+// @Description 약물 복용내역 조회시 호출
+// @Produce  json
+// @Param Authorization header string true "Bearer {jwt_token}"
+// @Success 200 {object} []MedicineTakeResponse "운동정보"
+// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Router /get-takens [get]
+func GetExpectsHandler(endpoint endpoint.Endpoint) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id, err := verifyJWT(c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		response, err := endpoint(c.Context(), id)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		resp := response.([]MedicineTakeResponse)
+		return c.Status(fiber.StatusOK).JSON(resp)
+	}
+}
+
+// @Tags 약물 /medicine
+// @Summary 등록 약물 조회
+// @Description 등록 약물 조회시 호출
+// @Produce  json
+// @Param Authorization header string true "Bearer {jwt_token}"
+// @Success 200 {object} []MedicineResponse "등록 약물 정보"
+// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Router /get-medicines [get]
+func GetMedicinesHandler(endpoint endpoint.Endpoint) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id, err := verifyJWT(c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		response, err := endpoint(c.Context(), id)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+		resp := response.([]MedicineResponse)
+		return c.Status(fiber.StatusOK).JSON(resp)
+	}
+}
+
+// @Tags 약물 /medicine
+// @Summary 약물 복용
+// @Description 약물 복용시 호출
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Bearer {jwt_token}"
+// @Param request body TakeMedicine true "약물 복용 데이터"
+// @Success 200 {object} BasicResponse "성공시 200 반환"
+// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Router /take-medicine [post]
+func TakeHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := verifyJWT(c)
 		if err != nil {
@@ -101,11 +155,12 @@ func SendHandler(endpoint endpoint.Endpoint) fiber.Handler {
 
 		// 사용자별 잠금 시작
 		if _, loaded := userLocks.LoadOrStore(id, true); loaded {
-			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "Concurrent request detected"})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Concurrent request detected"})
 		}
 		defer userLocks.Delete(id)
 
-		var req InquireRequest
+		var req TakeMedicine
+
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -114,114 +169,46 @@ func SendHandler(endpoint endpoint.Endpoint) fiber.Handler {
 		response, err := endpoint(c.Context(), req)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-
 		}
 
 		resp := response.(BasicResponse)
 		return c.Status(fiber.StatusOK).JSON(resp)
+
 	}
 }
 
-// @Tags 문의 /inquire
-// @Summary 문의조회(본인)
-// @Description 나의문의보기시 호출
+// @Tags 약물 /medicine
+// @Summary 약물 복용취소
+// @Description 약물 복용취소시 호출
 // @Accept  json
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Param  page  query  uint  false  "페이지 번호 default 0" (30개씩)
-// @Param  start_date  query string  false  "시작날짜 yyyy-mm-dd"
-// @Param  end_date  query string  false  "종료날짜 yyyy-mm-dd"
-// @Success 200 {object} []InquireResponse "문의내역 배열 반환"
+// @Param id path string ture "복용 ID"
+// @Success 200 {object} BasicResponse "성공시 200 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /get-inquires [get]
-func GetHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// @Router /untake-medicine/{id} [post]
+func UnTakeHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := verifyJWT(c)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
-		var queryParams GetInquireParams
-		if err := c.QueryParser(&queryParams); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
 
-		// id와 queryParams를 함께 전달
-		response, err := endpoint(c.Context(), map[string]interface{}{
-			"id":          id,
-			"queryParams": queryParams,
-		})
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		// 사용자별 잠금 시작
+		if _, loaded := userLocks.LoadOrStore(id, true); loaded {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Concurrent request detected"})
 		}
+		defer userLocks.Delete(id)
 
-		resp := response.([]InquireResponse)
-		return c.Status(fiber.StatusOK).JSON(resp)
-	}
-}
-
-// @Tags 문의 /inquire
-// @Summary 문의조회(관리자)
-// @Description 관리자 문의내역 확인시 호출 (30개씩)
-// @Produce  json
-// @Param Authorization header string true "Bearer {jwt_token}"
-// @Param  page  query  uint  false  "페이지 번호 default 0"
-// @Param  start_date  query string  false  "시작날짜 yyyy-mm-dd"
-// @Param  end_date  query string  false  "종료날짜 yyyy-mm-dd"
-// @Success 200 {object} []InquireResponse "문의내역 배열 반환"
-// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /all-inquires [get]
-func GetAllHandler(endpoint endpoint.Endpoint) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		id, err := verifyJWT(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
-		var queryParams GetInquireParams
-		if err := c.QueryParser(&queryParams); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
-
-		// id와 queryParams를 함께 전달
-		response, err := endpoint(c.Context(), map[string]interface{}{
-			"id":          id,
-			"queryParams": queryParams,
-		})
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
-
-		resp := response.([]InquireResponse)
-		return c.Status(fiber.StatusOK).JSON(resp)
-	}
-}
-
-// @Tags 문의 /inquire
-// @Summary 문의삭제
-// @Description 문의삭제시 호출
-// @Accept  json
-// @Produce  json
-// @Param Authorization header string true "Bearer {jwt_token}"
-// @Param id path string ture "문의ID"
-// @Success 200 {object} BasicResponse "성공시 200 반환"
-// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /remove-inquire/{id} [post]
-func RemoveInquireHandler(endpoint endpoint.Endpoint) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		uid, err := verifyJWT(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
-		alarmId := c.Params("id")
-		id, err := strconv.Atoi(alarmId)
+		takenId := c.Params("id")
+		tid, err := strconv.Atoi(takenId)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 		response, err := endpoint(c.Context(), map[string]interface{}{
-			"uid": uid,
-			"id":  uint(id),
+			"uid": id,
+			"id":  uint(tid),
 		})
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -229,40 +216,33 @@ func RemoveInquireHandler(endpoint endpoint.Endpoint) fiber.Handler {
 
 		resp := response.(BasicResponse)
 		return c.Status(fiber.StatusOK).JSON(resp)
+
 	}
 }
 
-// @Tags 문의 /inquire
-// @Summary 문의답변/추가문의 삭제
-// @Description 문의답변/추가문의 삭제시 호출
-// @Accept  json
+// @Tags 약물 /medicine
+// @Summary 약물 찾기
+// @Description 약물 검색 키워드 입력시 호출
 // @Produce  json
-// @Param Authorization header string true "Bearer {jwt_token}"
-// @Param id path string ture "답변/추가문의ID"
-// @Success 200 {object} BasicResponse "성공시 200 반환"
+// @Param  keyword  query string  true  "키워드"
+// @Success 200 {object} []string "약물명"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /remove-reply/{id} [post]
-func RemoveReplyHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// @Router /search-medicines [get]
+func SearchHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		uid, err := verifyJWT(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
-		alarmId := c.Params("id")
-		id, err := strconv.Atoi(alarmId)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
-		response, err := endpoint(c.Context(), map[string]interface{}{
-			"uid": uid,
-			"id":  uint(id),
-		})
+		_, err := verifyJWT(c)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		resp := response.(BasicResponse)
+		keyword := c.Query("keyword")
+
+		response, err := endpoint(c.Context(), keyword)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+		resp := response.([]string)
 		return c.Status(fiber.StatusOK).JSON(resp)
 	}
 }

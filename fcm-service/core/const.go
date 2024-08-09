@@ -1,0 +1,4 @@
+package core
+
+const MEDICINENOTIFICATION = 1
+const EXERCISENOTIFICATION = 2

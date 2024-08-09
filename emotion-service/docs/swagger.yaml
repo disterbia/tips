@@ -1,0 +1,125 @@
+definitions:
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
+  core.EmotionRequest:
+    properties:
+      emotion:
+        maximum: 5
+        minimum: 1
+        type: integer
+      id:
+        type: integer
+      memo:
+        maxLength: 500
+        type: string
+      symptoms:
+        items:
+          type: integer
+        type: array
+      target_date:
+        example: YYYY-mm-dd
+        type: string
+    required:
+    - emotion
+    - target_date
+    type: object
+  core.EmotionResponse:
+    properties:
+      emotion:
+        type: integer
+      id:
+        type: integer
+      memo:
+        type: string
+      symptoms:
+        items:
+          type: integer
+        type: array
+      target_date:
+        example: YYYY-mm-dd
+        type: string
+    type: object
+  core.ErrorResponse:
+    properties:
+      err:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /get-emotions:
+    get:
+      description: 기분 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 시작날짜 yyyy-mm-dd
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: 종료날짜 yyyy-mm-dd
+        in: query
+        name: end_date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 기분정보
+          schema:
+            items:
+              $ref: '#/definitions/core.EmotionResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 기분 조회
+      tags:
+      - 기분 /emotion
+  /save-emotion:
+    post:
+      description: 기분 생성시 Id 생략
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO - 기분 데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.EmotionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 기분 생성/수정
+      tags:
+      - 기분 /emotion
+swagger: "2.0"

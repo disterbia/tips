@@ -6,9 +6,9 @@ type LoginResponse struct {
 }
 
 type GetInquireParams struct {
-	Page      uint   `form:"page"`
-	StartDate string `form:"start_date" example:"YYYY-MM-DD"`
-	EndDate   string `form:"end_date" example:"YYYY-MM-DD"`
+	Page      uint   `query:"page"`
+	StartDate string `query:"start_date" example:"YYYY-MM-DD"`
+	EndDate   string `query:"end_date" example:"YYYY-MM-DD"`
 }
 
 type InquireRequest struct {

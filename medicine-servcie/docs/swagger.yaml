@@ -1,0 +1,341 @@
+definitions:
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
+  core.ErrorResponse:
+    properties:
+      err:
+        type: string
+    type: object
+  core.ExpectMedicineResponse:
+    properties:
+      dose:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      time_taken:
+        additionalProperties:
+          type: integer
+        type: object
+    type: object
+  core.MedicineRequest:
+    properties:
+      dose:
+        type: number
+      end_at:
+        example: YYYY-MM:dd
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      medicine_type:
+        type: string
+      min_reserves:
+        type: number
+      name:
+        type: string
+      remaining:
+        type: number
+      start_at:
+        example: YYYY-MM-dd
+        type: string
+      times:
+        example:
+        - HH:mm
+        - HH:mm
+        items:
+          type: string
+        type: array
+      use_privacy:
+        type: boolean
+      weekdays:
+        items:
+          type: integer
+        type: array
+    type: object
+  core.MedicineResponse:
+    properties:
+      dose:
+        type: number
+      end_at:
+        example: YYYY-MM:dd
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      medicine_type:
+        type: string
+      min_reserves:
+        type: number
+      name:
+        type: string
+      remaining:
+        type: number
+      start_at:
+        example: YYYY-MM-dd
+        type: string
+      times:
+        items:
+          type: string
+        type: array
+      use_privacy:
+        type: boolean
+      weekdays:
+        items:
+          type: integer
+        type: array
+    type: object
+  core.MedicineTakeResponse:
+    properties:
+      date_taken:
+        example: YYYY-MM-dd
+        type: string
+      medicine_taken:
+        items:
+          $ref: '#/definitions/core.ExpectMedicineResponse'
+        type: array
+    type: object
+  core.TakeMedicine:
+    properties:
+      date_taken:
+        example: YYYY-MM-DD
+        type: string
+      dose:
+        type: number
+      medicine_id:
+        type: integer
+      time_taken:
+        example: HH:mm
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /get-medicines:
+    get:
+      description: 등록 약물 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 등록 약물 정보
+          schema:
+            items:
+              $ref: '#/definitions/core.MedicineResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 등록 약물 조회
+      tags:
+      - 약물 /medicine
+  /get-takens:
+    get:
+      description: 약물 복용내역 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 운동정보
+          schema:
+            items:
+              $ref: '#/definitions/core.MedicineTakeResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 약물 복용내역 조회
+      tags:
+      - 약물 /medicine
+  /remove-medicine/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 약물 삭제시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 약물 ID
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 약물 삭제
+      tags:
+      - 약물 /medicine
+  /save-medicine:
+    post:
+      description: 약물등록 및 수정시 호출 - 생성시 id생략
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO - 약물데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.MedicineRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 약물 저장
+      tags:
+      - 약물 /medicine
+  /search-medicines:
+    get:
+      description: 약물 검색 키워드 입력시 호출
+      parameters:
+      - description: 키워드
+        in: query
+        name: keyword
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 약물명
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 약물 찾기
+      tags:
+      - 약물 /medicine
+  /take-medicine:
+    post:
+      consumes:
+      - application/json
+      description: 약물 복용시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 약물 복용 데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.TakeMedicine'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 약물 복용
+      tags:
+      - 약물 /medicine
+  /untake-medicine/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 약물 복용취소시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 복용 ID
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 약물 복용취소
+      tags:
+      - 약물 /medicine
+swagger: "2.0"

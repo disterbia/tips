@@ -3,6 +3,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -72,12 +73,19 @@ func main() {
 	app.Use(IPRateLimitMiddleware())
 
 	// 서비스로의 리버스 프록시 설정
+	setupProxy(app, "/notification/*", "http://notification:44406")
+	setupProxy(app, "/medicine/*", "http://medicine:44407")
+	setupProxy(app, "/emotion/*", "http://emotion:44408")
 	setupProxy(app, "/user/*", "http://user:44409")
 	setupProxy(app, "/inquire/*", "http://inquire:44410")
 
 	// Swagger UI 프록시 설정
+	setupSwaggerUIProxy(app, "/notification-service/swagger/*", "http://notification:44406/swagger")
+	setupSwaggerUIProxy(app, "/medicine-service/swagger/*", "http://medicine:44407/swagger")
+	setupSwaggerUIProxy(app, "/emotion-service/swagger/*", "http://emotion:44408/swagger")
 	setupSwaggerUIProxy(app, "/user-service/swagger/*", "http://user:44409/swagger")
 	setupSwaggerUIProxy(app, "/inquire-service/swagger/*", "http://inquire:44410/swagger")
+
 	// Swagger JSON 파일 리다이렉트
 	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
 		referer := c.Get("Referer")
@@ -85,6 +93,12 @@ func main() {
 			return c.Redirect("/user-service/swagger/doc.json")
 		} else if strings.Contains(referer, "/inquire-service/") {
 			return c.Redirect("/inquire-service/swagger/doc.json")
+		} else if strings.Contains(referer, "/emotion-service/") {
+			return c.Redirect("/emotion-service/swagger/doc.json")
+		} else if strings.Contains(referer, "/medicine-service/") {
+			return c.Redirect("/medicine-service/swagger/doc.json")
+		} else if strings.Contains(referer, "/medicine-service/") {
+			return c.Redirect("/notification-service/swagger/doc.json")
 		}
 		return c.SendStatus(fiber.StatusNotFound)
 	})
@@ -96,7 +110,12 @@ func main() {
 func setupProxy(app *fiber.App, path string, target string) {
 	app.All(path, func(c *fiber.Ctx) error {
 		originalPath := c.Params("*")
+		originalQuery := c.Request().URI().QueryString()
 		targetURL := target + "/" + originalPath
+		if len(originalQuery) > 0 {
+			targetURL += "?" + string(originalQuery)
+		}
+		log.Printf("Proxying request to: %s\n", targetURL)
 		return proxy.Do(c, targetURL)
 	})
 }

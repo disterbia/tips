@@ -92,10 +92,10 @@ func (service *inquireService) GetMyInquires(id uint, page uint, startDate, endD
 	for _, v := range inquires {
 		var replies []InquireReplyResponse
 		for _, w := range v.Replies {
-			replies = append(replies, InquireReplyResponse{Id: w.ID, InquireId: w.InquireID, Content: w.Content, ReplyType: w.ReplyType, Created: w.Model.CreatedAt.Format("2006-01-02 15:04:05")})
+			replies = append(replies, InquireReplyResponse{Id: w.ID, InquireId: w.InquireID, Content: w.Content, ReplyType: w.ReplyType, Created: w.CreatedAt.Format("2006-01-02 15:04:05")})
 		}
 		inquireResponses = append(inquireResponses, InquireResponse{Id: v.ID, Email: v.Email, Title: v.Title, Content: v.Content,
-			CreatedAt: v.Model.CreatedAt.Format("2006-01-02 15:04:05"), Replies: replies})
+			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"), Replies: replies})
 	}
 
 	return inquireResponses, nil
@@ -144,10 +144,10 @@ func (service *inquireService) GetAllInquires(id uint, page uint, startDate, end
 	for _, v := range inquires {
 		var replies []InquireReplyResponse
 		for _, w := range v.Replies {
-			replies = append(replies, InquireReplyResponse{Id: w.ID, InquireId: w.InquireID, Content: w.Content, ReplyType: w.ReplyType, Created: w.Model.CreatedAt.Format("2006-01-02 15:04:05")})
+			replies = append(replies, InquireReplyResponse{Id: w.ID, InquireId: w.InquireID, Content: w.Content, ReplyType: w.ReplyType, Created: w.CreatedAt.Format("2006-01-02 15:04:05")})
 		}
 		inquireResponses = append(inquireResponses, InquireResponse{Id: v.ID, Email: v.Email, Title: v.Title, Content: v.Content,
-			CreatedAt: v.Model.CreatedAt.Format("2006-01-02 15:04:05"), Replies: replies})
+			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"), Replies: replies})
 	}
 
 	return inquireResponses, nil
@@ -158,7 +158,7 @@ func (service *inquireService) SendInquire(request InquireRequest) (string, erro
 	// 유효성 검사기 생성
 	validate := validator.New()
 
-	// 이메일 검증
+	//유효성 검증
 	if err := validate.Struct(request); err != nil {
 		return "", err
 	}
@@ -211,12 +211,12 @@ func (service *inquireService) AnswerInquire(request InquireReplyRequest) (strin
 	}
 
 	reponse, err := service.emailClient.SendEmail(context.Background(), &pb.EmailRequest{
-		Email:          inquire.Email,                                              // 받는 사람의 이메일
-		CreatedAt:      inquire.Model.CreatedAt.Format("2006-01-02 15:04:05"),      // 문의 생성 날짜
-		Title:          inquire.Title,                                              // 이메일 제목
-		Content:        inquire.Content,                                            // 문의 내용
-		ReplyContent:   inquireReply.Content,                                       // 답변 내용
-		ReplyCreatedAt: inquireReply.Model.CreatedAt.Format("2006-01-02 15:04:05"), // 답변 생성 날짜
+		Email:          inquire.Email,                                        // 받는 사람의 이메일
+		CreatedAt:      inquire.CreatedAt.Format("2006-01-02 15:04:05"),      // 문의 생성 날짜
+		Title:          inquire.Title,                                        // 이메일 제목
+		Content:        inquire.Content,                                      // 문의 내용
+		ReplyContent:   inquireReply.Content,                                 // 답변 내용
+		ReplyCreatedAt: inquireReply.CreatedAt.Format("2006-01-02 15:04:05"), // 답변 생성 날짜
 	})
 
 	if err != nil {

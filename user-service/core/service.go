@@ -226,9 +226,11 @@ func (service *userService) autoLogin(request AutoLoginRequest) (string, error) 
 
 func (service *userService) sendAuthCode(number string) (string, error) {
 	//존재하는 번호인지 체크
-	result := service.db.Debug().Where("phone_num=?", number).Find(&model.User{})
+	result := service.db.Debug().Where("phone = ?", number).Find(&model.User{})
 	if result.Error != nil {
-		return "", errors.New("db error")
+		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return "", errors.New("db error")
+		}
 
 	} else if result.RowsAffected > 0 {
 		// 레코드가 존재할 때
@@ -596,6 +598,7 @@ func (service *userService) GetUser(id uint) (UserResponse, error) {
 	userResponse.Phone = user.Phone
 	userResponse.SnsType = user.SnsType
 	userResponse.LinkedEmails = linkedEmails
+	userResponse.CreatedAt = user.CreatedAt.Format("2006-01-02")
 
 	return userResponse, nil
 }

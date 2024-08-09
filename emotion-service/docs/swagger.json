@@ -1,0 +1,189 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/get-emotions": {
+            "get": {
+                "description": "기분 조회시 호출",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "기분 /emotion"
+                ],
+                "summary": "기분 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {jwt_token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "시작날짜 yyyy-mm-dd",
+                        "name": "start_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "종료날짜 yyyy-mm-dd",
+                        "name": "end_date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "기분정보",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/core.EmotionResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/save-emotion": {
+            "post": {
+                "description": "기분 생성시 Id 생략",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "기분 /emotion"
+                ],
+                "summary": "기분 생성/수정",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {jwt_token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "요청 DTO - 기분 데이터",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/core.EmotionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공시 200 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.BasicResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "core.BasicResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.EmotionRequest": {
+            "type": "object",
+            "required": [
+                "emotion",
+                "target_date"
+            ],
+            "properties": {
+                "emotion": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 1
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "memo": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "symptoms": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "target_date": {
+                    "type": "string",
+                    "example": "YYYY-mm-dd"
+                }
+            }
+        },
+        "core.EmotionResponse": {
+            "type": "object",
+            "properties": {
+                "emotion": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "memo": {
+                    "type": "string"
+                },
+                "symptoms": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "target_date": {
+                    "type": "string",
+                    "example": "YYYY-mm-dd"
+                }
+            }
+        },
+        "core.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
