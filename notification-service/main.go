@@ -29,8 +29,7 @@ func main() {
 	}
 
 	// NATS 연결 설정
-	natsURL := os.Getenv("nats:4222")
-	nc, err := nats.Connect(natsURL)
+	nc, err := nats.Connect("nats:4222")
 	if err != nil {
 		log.Fatalf("Error connecting to NATS: %v", err)
 	}
