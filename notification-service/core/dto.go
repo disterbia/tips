@@ -13,7 +13,7 @@ type NotificationRequest struct {
 type MessageResponse struct {
 	Id        uint   `json:"id"`
 	Type      uint   `json:"type"`
-	Body      string `json:"body" example:"알람내용"`
+	Body      string `json:"body"`
 	ParentId  uint   `json:"parent_id"`
 	IsRead    bool   `json:"is_read"`
 	CreatedAt string `json:"created_at" example:"YYYY-mm-dd HH:mm:ss "`
