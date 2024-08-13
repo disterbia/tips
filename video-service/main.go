@@ -1,11 +1,12 @@
-// /emotion-service/main.go
+// /video-service/main.go
 package main
 
 import (
-	"emotion-service/core"
-	"emotion-service/model"
 	"log"
 	"os"
+	"video-service/core"
+	_ "video-service/docs"
+	"video-service/model"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -29,10 +30,11 @@ func main() {
 		return
 	}
 
-	svc := core.NewEmotionService(database)
+	svc := core.NewAdminVideoService(database)
 
-	saveEmotionEndpoint := core.SaveEmotionEndpoint(svc)
-	getEmotionsEndpoint := core.GetEmotionsEndpoint(svc)
+	getVimeoLevel1sEndpoint := core.GetVimeoLevel1sEndpoint(svc)
+	getVimeoLevel2sEndpoint := core.GetVimeoLevel2sEndpoint(svc)
+	saveEndpoint := core.SaveEndpoint(svc)
 
 	app := fiber.New()
 	app.Use(logger.New())
@@ -45,10 +47,11 @@ func main() {
 
 	// CORS 미들웨어 추가
 	app.Use(cors.New())
-	app.Post("/save-emotion", core.SaveEmotionHandler(saveEmotionEndpoint))
-	app.Get("/get-emotions", core.GetEmotionsHandler(getEmotionsEndpoint))
 
-	log.Fatal(app.Listen(":44404"))
-	// router.RunTLS(":8080", "cert.pem", "key.pem")
+	app.Get("/get-items", core.GetVimeoLevel1sHandler(getVimeoLevel1sEndpoint))
+	app.Get("/get-videos/:id", core.GetVimeoLevel2sHandler(getVimeoLevel2sEndpoint))
+	app.Post("/save-videos", core.SaveHandler(saveEndpoint))
+
+	log.Fatal(app.Listen(":44410"))
 
 }

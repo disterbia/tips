@@ -1,0 +1,138 @@
+definitions:
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
+  core.ErrorResponse:
+    properties:
+      err:
+        type: string
+    type: object
+  core.VideoData:
+    properties:
+      deselectedVideos:
+        items:
+          type: string
+        type: array
+      selectedVideos:
+        items:
+          type: string
+        type: array
+    type: object
+  core.VimeoLevel1:
+    properties:
+      name:
+        type: string
+      project_id:
+        type: string
+    type: object
+  core.VimeoLevel2:
+    properties:
+      is_active:
+        type: boolean
+      name:
+        type: string
+      video_id:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /get-items:
+    get:
+      description: 최초에 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 웰킨스 폴더 내용
+          schema:
+            items:
+              $ref: '#/definitions/core.VimeoLevel1'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 최상위 레벨 조회
+      tags:
+      - 관리자 동영상 관리 /video
+  /get-items/{id}:
+    get:
+      description: 폴더내부 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 해당 폴더 내용
+          schema:
+            items:
+              $ref: '#/definitions/core.VimeoLevel2'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 폴더 레벨2 조회
+      tags:
+      - 관리자 동영상 관리 /video
+  /save-videos/{id}:
+    post:
+      description: 활성화 동영상 변경시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 활성화 할 id 배열
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.VideoData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 동영상 활성화
+      tags:
+      - 관리자 동영상 관리 /video
+swagger: "2.0"

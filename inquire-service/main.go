@@ -56,7 +56,7 @@ func main() {
 	// CORS 미들웨어 추가
 	app.Use(cors.New())
 
-	app.Post("/admin-login", core.AdminLoginHandler(adminLoginEndpoint))
+	app.Post("/login", core.AdminLoginHandler(adminLoginEndpoint))
 	app.Post("/inquire-reply", core.AnswerHandler(answerEndpoint))
 	app.Post("/send-inquire", core.SendHandler(sendEndpoint))
 	app.Post("/remove-inquire/:id", core.RemoveInquireHandler(removeInquireEndpoint))
@@ -64,6 +64,6 @@ func main() {
 	app.Get("/get-inquires", core.GetHandler(getEndpoint))
 	app.Get("/all-inquires", core.GetAllHandler(allEndpoint))
 
-	log.Fatal(app.Listen(":44410"))
+	log.Fatal(app.Listen(":44406"))
 
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"medicine-service/model"
 	"sort"
 	"time"
@@ -16,7 +15,7 @@ import (
 
 type MedicineService interface {
 	SaveMedicine(r MedicineRequest) (string, error)
-	RemoveMedicines(id uint, uid uint) (string, error)
+	RemoveMedicine(id uint, uid uint) (string, error)
 	GetExpects(id uint) ([]MedicineTakeResponse, error)
 	GetMedicines(id uint) ([]MedicineResponse, error)
 	TakeMedicine(takeMedicine TakeMedicine) (string, error)
@@ -41,8 +40,6 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 	var weekdaysResult pq.Int64Array
 	var startAt *time.Time
 	var endAt *time.Time
-	var minReserves *float32
-	var remaining *float32
 
 	for _, v := range r.Weekdays {
 		if v == 0 || v > 7 {
@@ -77,11 +74,8 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 		endAt = &time
 	}
 
-	if r.MinReserves != 0 {
-		minReserves = &r.MinReserves
-	}
-	if r.Remaining != 0 {
-		remaining = &r.Remaining
+	if r.Remaining == 0 || r.Dose == 0 {
+		return "", errors.New("invalid value")
 	}
 
 	var medicine model.Medicine
@@ -100,8 +94,7 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 	medicine.UsePrivacy = r.UsePrivacy
 	medicine.StartAt = startAt
 	medicine.EndAt = endAt
-	medicine.MinReserves = minReserves
-	medicine.Remaining = remaining
+	medicine.Remaining = r.Remaining
 	medicine.IsActive = r.IsActive
 
 	if err := service.db.Save(&medicine).Error; err != nil {
@@ -129,7 +122,7 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 			return "", errors.New("json marshal error")
 		}
 
-		if err := service.nats.Publish("save-notification", eventData); err != nil {
+		if err := service.nats.Publish("save-medicine", eventData); err != nil {
 			return "", errors.New("nats publish error")
 		}
 	} else {
@@ -143,7 +136,7 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 			return "", errors.New("json marshal error")
 		}
 
-		if err := service.nats.Publish("remove-notification", eventData); err != nil {
+		if err := service.nats.Publish("remove-medicine", eventData); err != nil {
 			return "", errors.New("nats publish error")
 		}
 	}
@@ -151,7 +144,7 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 	return "200", nil
 }
 
-func (service *medicineService) RemoveMedicines(id uint, uid uint) (string, error) {
+func (service *medicineService) RemoveMedicine(id uint, uid uint) (string, error) {
 	if err := service.db.Where("id =? ", id).Delete(&model.Medicine{}).Error; err != nil {
 		return "", errors.New("db error")
 	}
@@ -319,7 +312,6 @@ func (service *medicineService) GetMedicines(id uint) ([]MedicineResponse, error
 
 	for _, v := range medicines {
 		var startAt, endAt *string
-		var minReserves, remaining *float32
 
 		if v.StartAt != nil {
 			start := v.StartAt.Format("2006-01-02")
@@ -329,17 +321,9 @@ func (service *medicineService) GetMedicines(id uint) ([]MedicineResponse, error
 			end := v.EndAt.Format("2006-01-02")
 			endAt = &end
 		}
-		if v.Remaining != nil {
-			remaining = v.Remaining
-		}
-		if v.MinReserves != nil {
-			minReserves = v.MinReserves
-		}
-		log.Println(v.ID)
-		log.Println(v.CreatedAt)
-		log.Println(v.Name)
+
 		medicineResponses = append(medicineResponses, MedicineResponse{Id: v.ID, Name: v.Name, Times: v.Times, Weekdays: int64ArrayToUintSlice(v.Weekdays), Dose: v.Dose, MedicineType: v.MedicineType,
-			StartAt: startAt, EndAt: endAt, MinReserves: minReserves, Remaining: remaining, UsePrivacy: v.UsePrivacy, IsActive: v.IsActive})
+			StartAt: startAt, EndAt: endAt, Remaining: v.Remaining, UsePrivacy: v.UsePrivacy, IsActive: v.IsActive})
 	}
 
 	return medicineResponses, nil
@@ -374,18 +358,15 @@ func (service *medicineService) TakeMedicine(request TakeMedicine) (string, erro
 		return "", errors.New("db error2")
 	}
 
-	if medicine.Remaining != nil {
-		if request.Dose > *medicine.Remaining {
-			return "", errors.New("over remaining")
-		}
+	if request.Dose > medicine.Remaining {
+		return "", errors.New("over remaining")
 	}
 
 	tx := service.db.Begin()
-	if medicine.Remaining != nil {
-		if err := tx.UpdateColumn("remaining", *medicine.Remaining-request.Dose).Error; err != nil {
-			tx.Rollback()
-			return "", errors.New("db error3")
-		}
+
+	if err := tx.Model(&medicine).UpdateColumn("remaining", medicine.Remaining-request.Dose).Error; err != nil {
+		tx.Rollback()
+		return "", errors.New("db error3")
 	}
 
 	medicineTake = model.MedicineTake{MedicineID: request.MedicineId, Uid: request.Uid, Dose: request.Dose, DateTaken: dateTaken, TimeTaken: request.TimeTaken}

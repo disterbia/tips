@@ -7,211 +7,129 @@ definitions:
   core.ErrorResponse:
     properties:
       err:
-        description: wwwwww
         type: string
     type: object
-  core.InquireReplyRequest:
+  core.ExerciseRequest:
     properties:
-      content:
-        maxLength: 1000
-        type: string
-      inquire_id:
-        type: integer
-      reply_type:
-        type: boolean
-    required:
-    - content
-    type: object
-  core.InquireReplyResponse:
-    properties:
-      content:
-        type: string
-      created:
-        example: 'YYYY-mm-dd HH:mm:ss '
+      end_at:
+        example: YYYY-MM:dd
         type: string
       id:
         type: integer
-      inquire_id:
-        type: integer
-      reply_type:
+      is_active:
         type: boolean
-    type: object
-  core.InquireRequest:
-    properties:
-      content:
-        maxLength: 1000
+      name:
         type: string
-      email:
+      start_at:
+        example: YYYY-MM-dd
         type: string
-      title:
-        maxLength: 50
-        type: string
-    required:
-    - content
-    - email
-    - title
-    type: object
-  core.InquireResponse:
-    properties:
-      content:
-        type: string
-      created_at:
-        example: YYYY-mm-dd HH:mm:ss
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-      replies:
+      times:
+        example:
+        - HH:mm
+        - HH:mm
         items:
-          $ref: '#/definitions/core.InquireReplyResponse'
+          type: string
         type: array
-      title:
+      weekdays:
+        items:
+          type: integer
+        type: array
+    type: object
+  core.ExerciseResponse:
+    properties:
+      end_at:
+        example: YYYY-MM:dd
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      start_at:
+        example: YYYY-MM-dd
+        type: string
+      times:
+        items:
+          type: string
+        type: array
+      weekdays:
+        items:
+          type: integer
+        type: array
+    type: object
+  core.ExerciseTakeResponse:
+    properties:
+      Exercise_taken:
+        items:
+          $ref: '#/definitions/core.ExpectExerciseResponse'
+        type: array
+      date_taken:
+        example: YYYY-MM-dd
         type: string
     type: object
-  core.SuccessResponse:
+  core.ExpectExerciseResponse:
     properties:
-      jwt:
+      id:
+        type: integer
+      name:
+        type: string
+      time_taken:
+        additionalProperties:
+          type: integer
+        type: object
+    type: object
+  core.ProjectResponse:
+    properties:
+      count:
+        type: integer
+      name:
+        type: string
+      project_id:
+        type: string
+    type: object
+  core.TakeExercise:
+    properties:
+      date_taken:
+        example: YYYY-MM-DD
+        type: string
+      exercise_id:
+        type: integer
+      time_taken:
+        example: HH:mm
+        type: string
+    type: object
+  core.VideoResponse:
+    properties:
+      duration:
+        type: integer
+      name:
+        type: string
+      thumbnail_url:
+        type: string
+      video_id:
         type: string
     type: object
 info:
   contact: {}
 paths:
-  /login:
+  /do-exercises:
     post:
       consumes:
       - application/json
-      description: 관리자 로그인시 호출
-      parameters:
-      - description: email
-        in: body
-        name: email
-        required: true
-        schema:
-          type: string
-      - description: password
-        in: body
-        name: password
-        required: true
-        schema:
-          type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공시 JWT 토큰 반환
-          schema:
-            $ref: '#/definitions/core.SuccessResponse'
-        "500":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-      security:
-      - jwt: []
-      summary: 관리자 로그인
-      tags:
-      - 로그인 /inquire
-  /all-inquires:
-    get:
-      description: 관리자 문의내역 확인시 호출 (30개씩)
+      description: 운동 완료 호출
       parameters:
       - description: Bearer {jwt_token}
         in: header
         name: Authorization
         required: true
         type: string
-      - description: 페이지 번호 default 0
-        in: query
-        name: page
-        type: integer
-      - description: 시작날짜 yyyy-mm-dd
-        in: query
-        name: start_date
-        type: string
-      - description: 종료날짜 yyyy-mm-dd
-        in: query
-        name: end_date
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 문의내역 배열 반환
-          schema:
-            items:
-              $ref: '#/definitions/core.InquireResponse'
-            type: array
-        "400":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-        "500":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-      summary: 문의조회(관리자)
-      tags:
-      - 문의 /inquire
-  /get-inquires:
-    get:
-      consumes:
-      - application/json
-      description: 나의문의보기시 호출
-      parameters:
-      - description: Bearer {jwt_token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: 페이지 번호 default 0
-        in: query
-        name: page
-        type: integer
-      - description: 시작날짜 yyyy-mm-dd
-        in: query
-        name: start_date
-        type: string
-      - description: 종료날짜 yyyy-mm-dd
-        in: query
-        name: end_date
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 문의내역 배열 반환
-          schema:
-            items:
-              $ref: '#/definitions/core.InquireResponse'
-            type: array
-        "400":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-        "500":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-      summary: 문의조회(본인)
-      tags:
-      - 문의 /inquire
-  /inquire-reply:
-    post:
-      consumes:
-      - application/json
-      description: 답변/추가문의 등록시 호출
-      parameters:
-      - description: Bearer {jwt_token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: 요청 DTO - 답변데이터
+      - description: 운동 완료 데이터
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/core.InquireReplyRequest'
+          $ref: '#/definitions/core.TakeExercise'
       produces:
       - application/json
       responses:
@@ -227,21 +145,216 @@ paths:
           description: 요청 처리 실패시 오류 메시지 반환
           schema:
             $ref: '#/definitions/core.ErrorResponse'
-      summary: 답변/추가문의
+      summary: 운동 기록
       tags:
-      - 문의 /inquire
-  /remove-inquire/{id}:
-    post:
-      consumes:
-      - application/json
-      description: 문의삭제시 호출
+      - 운동 /exercise
+  /get-exercises:
+    get:
+      description: 등록 운동 조회시 호출
       parameters:
       - description: Bearer {jwt_token}
         in: header
         name: Authorization
         required: true
         type: string
-      - description: 문의ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 등록 운동 정보
+          schema:
+            items:
+              $ref: '#/definitions/core.ExerciseResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 등록 운동 조회
+      tags:
+      - 운동 /exercise
+  /get-projects:
+    get:
+      description: 운동 동영상 카테고리 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 카테고리 정보
+          schema:
+            items:
+              $ref: '#/definitions/core.ProjectResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 운동 동영상 카테고리 조회
+      tags:
+      - 운동 /exercise
+  /get-takens:
+    get:
+      description: 운동 내역 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 운동 내역정보
+          schema:
+            items:
+              $ref: '#/definitions/core.ExerciseTakeResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 운동 내역 조회
+      tags:
+      - 운동 /exercise
+  /get-videos:
+    get:
+      description: 카테고리별 운동 동영상 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: project_id
+        in: query
+        name: project_id
+        required: true
+        type: string
+      - description: 페이지 default 0
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 동영상 정보
+          schema:
+            items:
+              $ref: '#/definitions/core.VideoResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 카테고리별 운동 동영상 조회 (20개씩)
+      tags:
+      - 운동 /exercise
+  /remove-exercise/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 운동 삭제시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 삭제할 id 배열
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 운동 삭제
+      tags:
+      - 운동 /exercise
+  /save-exercise:
+    post:
+      description: 운동 등록 및 수정시 호출 - 생성시 id생략
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO - 운동 데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.ExerciseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 운동 저장
+      tags:
+      - 운동 /exercise
+  /undo-exercise/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 운동 취소시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 취소 ID
         in: path
         name: id
         type: string
@@ -260,75 +373,7 @@ paths:
           description: 요청 처리 실패시 오류 메시지 반환
           schema:
             $ref: '#/definitions/core.ErrorResponse'
-      summary: 문의삭제
+      summary: 운동 기록
       tags:
-      - 문의 /inquire
-  /remove-reply/{id}:
-    post:
-      consumes:
-      - application/json
-      description: 문의답변/추가문의 삭제시 호출
-      parameters:
-      - description: Bearer {jwt_token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: 답변/추가문의ID
-        in: path
-        name: id
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공시 200 반환
-          schema:
-            $ref: '#/definitions/core.BasicResponse'
-        "400":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-        "500":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-      summary: 문의답변/추가문의 삭제
-      tags:
-      - 문의 /inquire
-  /send-inquire:
-    post:
-      consumes:
-      - application/json
-      description: 문의등록시 호출
-      parameters:
-      - description: Bearer {jwt_token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: 요청 DTO - 문의데이터
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/core.InquireRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공시 200 반환
-          schema:
-            $ref: '#/definitions/core.BasicResponse'
-        "400":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-        "500":
-          description: 요청 처리 실패시 오류 메시지 반환
-          schema:
-            $ref: '#/definitions/core.ErrorResponse'
-      summary: 문의하기
-      tags:
-      - 문의 /inquire
+      - 운동 /exercise
 swagger: "2.0"

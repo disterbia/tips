@@ -19,7 +19,7 @@ var userLocks sync.Map
 // @Param password body string true "password"
 // @Success 200 {object} SuccessResponse "성공시 JWT 토큰 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /admin-login [post]
+// @Router /login [post]
 func AdminLoginHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req map[string]interface{}

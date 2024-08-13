@@ -73,18 +73,23 @@ func main() {
 	app.Use(IPRateLimitMiddleware())
 
 	// 서비스로의 리버스 프록시 설정
-	setupProxy(app, "/notification/*", "http://notification:44406")
+
+	setupProxy(app, "/emotion/*", "http://emotion:44404")
+	setupProxy(app, "/exercise/*", "http://exercise:44405")
+	setupProxy(app, "/inquire/*", "http://inquire:44406")
 	setupProxy(app, "/medicine/*", "http://medicine:44407")
-	setupProxy(app, "/emotion/*", "http://emotion:44408")
+	setupProxy(app, "/notification/*", "http://notification:44408")
 	setupProxy(app, "/user/*", "http://user:44409")
-	setupProxy(app, "/inquire/*", "http://inquire:44410")
+	setupProxy(app, "/video/*", "http://video:44410")
 
 	// Swagger UI 프록시 설정
-	setupSwaggerUIProxy(app, "/notification-service/swagger/*", "http://notification:44406/swagger")
+	setupSwaggerUIProxy(app, "/emotion-service/swagger/*", "http://emotion:44404/swagger")
+	setupSwaggerUIProxy(app, "/exercise-service/swagger/*", "http://exercise:44405/swagger")
+	setupSwaggerUIProxy(app, "/inquire-service/swagger/*", "http://inquire:44406/swagger")
 	setupSwaggerUIProxy(app, "/medicine-service/swagger/*", "http://medicine:44407/swagger")
-	setupSwaggerUIProxy(app, "/emotion-service/swagger/*", "http://emotion:44408/swagger")
+	setupSwaggerUIProxy(app, "/notification-service/swagger/*", "http://notification:44408/swagger")
 	setupSwaggerUIProxy(app, "/user-service/swagger/*", "http://user:44409/swagger")
-	setupSwaggerUIProxy(app, "/inquire-service/swagger/*", "http://inquire:44410/swagger")
+	setupSwaggerUIProxy(app, "/video-service/swagger/*", "http://video:44410/swagger")
 
 	// Swagger JSON 파일 리다이렉트
 	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
@@ -93,12 +98,21 @@ func main() {
 			return c.Redirect("/user-service/swagger/doc.json")
 		} else if strings.Contains(referer, "/inquire-service/") {
 			return c.Redirect("/inquire-service/swagger/doc.json")
+
 		} else if strings.Contains(referer, "/emotion-service/") {
 			return c.Redirect("/emotion-service/swagger/doc.json")
+
 		} else if strings.Contains(referer, "/medicine-service/") {
 			return c.Redirect("/medicine-service/swagger/doc.json")
-		} else if strings.Contains(referer, "/medicine-service/") {
+
+		} else if strings.Contains(referer, "/notification-service/") {
 			return c.Redirect("/notification-service/swagger/doc.json")
+
+		} else if strings.Contains(referer, "/exercise-service/") {
+			return c.Redirect("/exercise-service/swagger/doc.json")
+
+		} else if strings.Contains(referer, "/video-service/") {
+			return c.Redirect("/video-service/swagger/doc.json")
 		}
 		return c.SendStatus(fiber.StatusNotFound)
 	})

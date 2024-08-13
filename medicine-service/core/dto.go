@@ -15,7 +15,6 @@ type MedicineRequest struct {
 	MedicineType string   `json:"medicine_type"`
 	StartAt      string   `json:"start_at" example:"YYYY-MM-dd"`
 	EndAt        string   `json:"end_at"  example:"YYYY-MM:dd"`
-	MinReserves  float32  `json:"min_reserves"`
 	Remaining    float32  `json:"remaining"`
 	UsePrivacy   bool     `json:"use_privacy"`
 	IsActive     bool     `json:"is_active"`
@@ -29,8 +28,7 @@ type MedicineResponse struct {
 	MedicineType string   `json:"medicine_type"`
 	StartAt      *string  `json:"start_at" example:"YYYY-MM-dd"`
 	EndAt        *string  `json:"end_at"  example:"YYYY-MM:dd"`
-	MinReserves  *float32 `json:"min_reserves"`
-	Remaining    *float32 `json:"remaining"`
+	Remaining    float32  `json:"remaining"`
 	UsePrivacy   bool     `json:"use_privacy"`
 	IsActive     bool     `json:"is_active"`
 }

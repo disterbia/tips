@@ -39,7 +39,7 @@ func main() {
 
 	// NATS 구독 설정을 고루틴으로 실행
 	go func() {
-		_, err := nc.Subscribe("save-notification", func(m *nats.Msg) {
+		_, err := nc.Subscribe("save-medicine", func(m *nats.Msg) {
 			var req core.NotificationRequest
 			if err := json.Unmarshal(m.Data, &req); err != nil {
 				log.Printf("Error unmarshalling message: %v", err)
@@ -58,7 +58,44 @@ func main() {
 		}
 
 		// remove-notification 이벤트 구독
-		_, err = nc.Subscribe("remove-notification", func(m *nats.Msg) {
+		_, err = nc.Subscribe("remove-medicine", func(m *nats.Msg) {
+			var req core.NotificationRequest
+			if err := json.Unmarshal(m.Data, &req); err != nil {
+				log.Printf("Error unmarshalling message: %v", err)
+				return
+			}
+
+			code, err := notiSvc.RemoveNotifications(req)
+			if err != nil {
+				log.Printf("Error removing notification: %v", err)
+				return
+			}
+			log.Printf("Notification removed with code: %s", code)
+		})
+		if err != nil {
+			log.Fatalf("Error subscribing to remove-notification: %v", err)
+		}
+
+		_, err = nc.Subscribe("save-exercise", func(m *nats.Msg) {
+			var req core.NotificationRequest
+			if err := json.Unmarshal(m.Data, &req); err != nil {
+				log.Printf("Error unmarshalling message: %v", err)
+				return
+			}
+
+			code, err := notiSvc.SaveNotifications(req)
+			if err != nil {
+				log.Printf("Error saving notification: %v", err)
+				return
+			}
+			log.Printf("Notification saved with code: %s", code)
+		})
+		if err != nil {
+			log.Fatalf("Error subscribing to save-notification: %v", err)
+		}
+
+		// remove-notification 이벤트 구독
+		_, err = nc.Subscribe("remove-exercise", func(m *nats.Msg) {
 			var req core.NotificationRequest
 			if err := json.Unmarshal(m.Data, &req); err != nil {
 				log.Printf("Error unmarshalling message: %v", err)
@@ -99,5 +136,5 @@ func main() {
 	app.Post("/remove-messages", core.RemoveMessagesHandler(removeMessagesEndpoint))
 	app.Post("/read-message", core.ReadAllHandler(readMessagesNotisEndpoint))
 
-	log.Fatal(app.Listen(":44406"))
+	log.Fatal(app.Listen(":44408"))
 }

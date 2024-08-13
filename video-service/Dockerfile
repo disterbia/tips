@@ -11,16 +11,16 @@ COPY . .
 RUN go mod download
 
 # swag 설치
-RUN go install github.com/swaggo/swag/cmd/swag@v1.8.12
+RUN go install github.com/swaggo/swag/cmd/swag@latest
 
-# 크로스 컴파일링을 위한 환경 설정
+# 크로스 컴파일링을 위한 환경 변수 설정
 ENV GOOS=linux GOARCH=amd64
 
 # swag init 실행
 RUN swag init
 
 # 애플리케이션 빌드
-RUN go build -o emotion-service .
+RUN go build -o video-service .
 
 # 최종 실행 이미지
 FROM ubuntu:latest
@@ -32,9 +32,9 @@ RUN apt-get update && apt-get install -y tzdata ca-certificates && update-ca-cer
 WORKDIR /tips
 
 # 빌더 스테이지에서 생성된 실행 파일 복사
-COPY --from=builder /tips/emotion-service .
+COPY --from=builder /tips/video-service .
 # .env 파일 복사 추가
 COPY --from=builder /tips/.env .
 
 # 애플리케이션 실행
-CMD ["./emotion-service"]
+CMD ["./video-service"]

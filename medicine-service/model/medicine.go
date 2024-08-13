@@ -18,8 +18,7 @@ type Medicine struct {
 	MedicineType string
 	StartAt      *time.Time `gorm:"type:date"`
 	EndAt        *time.Time `gorm:"type:date"`
-	MinReserves  *float32
-	Remaining    *float32
+	Remaining    float32
 	UsePrivacy   bool
 	IsActive     bool
 }

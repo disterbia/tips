@@ -6,10 +6,10 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func SaveEndpoint(s MedicineService) endpoint.Endpoint {
+func SaveExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		medicine := request.(MedicineRequest)
-		code, err := s.SaveMedicine(medicine)
+		exercise := request.(ExerciseRequest)
+		code, err := s.SaveExercise(exercise)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -17,20 +17,7 @@ func SaveEndpoint(s MedicineService) endpoint.Endpoint {
 	}
 }
 
-func RemoveEndpoint(s MedicineService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		reqMap := request.(map[string]interface{})
-		id := reqMap["id"].(uint)
-		uid := reqMap["uid"].(uint)
-		code, err := s.RemoveMedicine(id, uid)
-		if err != nil {
-			return BasicResponse{Code: err.Error()}, err
-		}
-		return BasicResponse{Code: code}, nil
-	}
-}
-
-func GetExpectsEndpoint(s MedicineService) endpoint.Endpoint {
+func GetExpectsEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		uid := request.(uint)
 		inquires, err := s.GetExpects(uid)
@@ -41,10 +28,10 @@ func GetExpectsEndpoint(s MedicineService) endpoint.Endpoint {
 	}
 }
 
-func GetMedicinesEndpoint(s MedicineService) endpoint.Endpoint {
+func GetExercisesEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		id := request.(uint)
-		medicines, err := s.GetMedicines(id)
+		medicines, err := s.GetExercises(id)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -52,23 +39,12 @@ func GetMedicinesEndpoint(s MedicineService) endpoint.Endpoint {
 	}
 }
 
-func TakeEndpoint(s MedicineService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		takeMedicine := request.(TakeMedicine)
-		code, err := s.TakeMedicine(takeMedicine)
-		if err != nil {
-			return BasicResponse{Code: err.Error()}, err
-		}
-		return BasicResponse{Code: code}, nil
-	}
-}
-
-func UnTakeEndpoint(s MedicineService) endpoint.Endpoint {
+func RemoveExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		uid := reqMap["uid"].(uint)
-		code, err := s.UnTakeMedicine(id, uid)
+		code, err := s.RemoveExercise(id, uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -76,13 +52,34 @@ func UnTakeEndpoint(s MedicineService) endpoint.Endpoint {
 	}
 }
 
-func SearchsEndpoint(s MedicineService) endpoint.Endpoint {
+func DoExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		keyword := request.(string)
-		medicines, err := s.SearchMedicines(keyword)
+		exercise := request.(TakeExercise)
+		code, err := s.DoExercise(exercise)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
-		return medicines, nil
+		return BasicResponse{Code: code}, nil
+	}
+}
+
+func GetProjectsEndpoint(s ExerciseService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		projects, err := s.GetProjects()
+		if err != nil {
+			return BasicResponse{Code: err.Error()}, err
+		}
+		return projects, nil
+	}
+}
+
+func GetVideosEndpoint(s ExerciseService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		reqMap := request.(GetVideoParams)
+		videos, err := s.GetVideos(reqMap.ProjectId, reqMap.Page)
+		if err != nil {
+			return BasicResponse{Code: err.Error()}, err
+		}
+		return videos, nil
 	}
 }
