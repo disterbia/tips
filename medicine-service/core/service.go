@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"medicine-service/model"
 	"sort"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/lib/pq"
 	"github.com/nats-io/nats.go"
@@ -40,6 +42,11 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 	var weekdaysResult pq.Int64Array
 	var startAt *time.Time
 	var endAt *time.Time
+
+	name := strings.TrimSpace(r.Name)
+	if utf8.RuneCountInString(name) > 10 || len(name) == 0 {
+		return "", errors.New("validate name")
+	}
 
 	for _, v := range r.Weekdays {
 		if v == 0 || v > 7 {

@@ -1,4 +1,13 @@
 definitions:
+  core.AppVersionResponse:
+    properties:
+      android_link:
+        type: string
+      ios_link:
+        type: string
+      latest_version:
+        type: string
+    type: object
   core.AutoLoginRequest:
     properties:
       device_id:
@@ -15,6 +24,25 @@ definitions:
     properties:
       err:
         type: string
+    type: object
+  core.ImageResponse:
+    properties:
+      thumbnail_url:
+        type: string
+      url:
+        type: string
+    type: object
+  core.LinkRequest:
+    properties:
+      id_token:
+        type: string
+    type: object
+  core.LinkedResponse:
+    properties:
+      email:
+        type: string
+      sns_type:
+        type: integer
     type: object
   core.LoginRequest:
     properties:
@@ -76,6 +104,29 @@ definitions:
       user_type:
         type: integer
     type: object
+  core.UserResponse:
+    properties:
+      birthday:
+        example: yyyy-mm-dd
+        type: string
+      created_at:
+        type: string
+      gender:
+        description: 'true:남 false: 여'
+        type: boolean
+      linked_emails:
+        items:
+          $ref: '#/definitions/core.LinkedResponse'
+        type: array
+      name:
+        type: string
+      phone:
+        type: string
+      profile_image:
+        $ref: '#/definitions/core.ImageResponse'
+      sns_type:
+        type: integer
+    type: object
   core.VerifyRequest:
     properties:
       code:
@@ -121,6 +172,94 @@ paths:
       summary: 자동로그인
       tags:
       - 로그인 /user
+  /get-user:
+    get:
+      consumes:
+      - application/json
+      description: 내 정보 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 유저 객체 반환/ ture:남성 user_Type- 0:해당없음 1:파킨슨 환자 2:보호자 sns_type-
+            0:휴대폰,1:카카오 2:구글 3:애플
+          schema:
+            $ref: '#/definitions/core.UserResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 회원정보 조회
+      tags:
+      - 회원정보 조회 /user
+  /get-version:
+    get:
+      consumes:
+      - application/json
+      description: 최신버전 조회시 호출
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 최신 버전 정보
+          schema:
+            $ref: '#/definitions/core.AppVersionResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 최신버전 조회
+      tags:
+      - 공통 /user
+  /link-email:
+    post:
+      consumes:
+      - application/json
+      description: 계정 연동시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.LinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 계정 연동
+      tags:
+      - 계정 연동 /user
   /phone-login:
     post:
       consumes:
@@ -153,6 +292,35 @@ paths:
       summary: 휴대번호 로그인
       tags:
       - 로그인 /user
+  /remove-user:
+    post:
+      consumes:
+      - application/json
+      description: 회원탈퇴시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 회원탈퇴
+      tags:
+      - 회원탈퇴 /user
   /send-code/{number}:
     post:
       consumes:

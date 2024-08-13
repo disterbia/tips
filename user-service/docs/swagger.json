@@ -56,6 +56,138 @@
                 }
             }
         },
+        "/get-user": {
+            "get": {
+                "description": "내 정보 조회시 호출",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "회원정보 조회 /user"
+                ],
+                "summary": "회원정보 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {jwt_token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공시 유저 객체 반환/ ture:남성 user_Type- 0:해당없음 1:파킨슨 환자 2:보호자 sns_type- 0:휴대폰,1:카카오 2:구글 3:애플",
+                        "schema": {
+                            "$ref": "#/definitions/core.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get-version": {
+            "get": {
+                "description": "최신버전 조회시 호출",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "공통 /user"
+                ],
+                "summary": "최신버전 조회",
+                "responses": {
+                    "200": {
+                        "description": "최신 버전 정보",
+                        "schema": {
+                            "$ref": "#/definitions/core.AppVersionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/link-email": {
+            "post": {
+                "description": "계정 연동시 호출",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "계정 연동 /user"
+                ],
+                "summary": "계정 연동",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {jwt_token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "요청 DTO",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/core.LinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공시 200 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.BasicResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/phone-login": {
             "post": {
                 "description": "휴대번호 로그인시 호출",
@@ -95,6 +227,50 @@
                     },
                     "500": {
                         "description": "요청 처리 실패시 오류 메시지 반환: 오류메시지 \"-1\" = 인증필요 , \"-2\" = 이미 가입한 번호,  \"-3\" = 추가정보 입력 필요",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/remove-user": {
+            "post": {
+                "description": "회원탈퇴시 호출",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "회원탈퇴 /user"
+                ],
+                "summary": "회원탈퇴",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {jwt_token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공시 200 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.BasicResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
                         "schema": {
                             "$ref": "#/definitions/core.ErrorResponse"
                         }
@@ -293,6 +469,20 @@
         }
     },
     "definitions": {
+        "core.AppVersionResponse": {
+            "type": "object",
+            "properties": {
+                "android_link": {
+                    "type": "string"
+                },
+                "ios_link": {
+                    "type": "string"
+                },
+                "latest_version": {
+                    "type": "string"
+                }
+            }
+        },
         "core.AutoLoginRequest": {
             "type": "object",
             "properties": {
@@ -317,6 +507,36 @@
             "properties": {
                 "err": {
                     "type": "string"
+                }
+            }
+        },
+        "core.ImageResponse": {
+            "type": "object",
+            "properties": {
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.LinkRequest": {
+            "type": "object",
+            "properties": {
+                "id_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.LinkedResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "sns_type": {
+                    "type": "integer"
                 }
             }
         },
@@ -406,6 +626,40 @@
                     "example": "base64string"
                 },
                 "user_type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "core.UserResponse": {
+            "type": "object",
+            "properties": {
+                "birthday": {
+                    "type": "string",
+                    "example": "yyyy-mm-dd"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "true:남 false: 여",
+                    "type": "boolean"
+                },
+                "linked_emails": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/core.LinkedResponse"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "profile_image": {
+                    "$ref": "#/definitions/core.ImageResponse"
+                },
+                "sns_type": {
                     "type": "integer"
                 }
             }

@@ -33,7 +33,7 @@ type ExerciseResponse struct {
 
 type ExerciseTakeResponse struct {
 	DateTaken     string                   `json:"date_taken" example:"YYYY-MM-dd"`
-	ExerciseTaken []ExpectExerciseResponse `json:"Exercise_taken"`
+	ExerciseTaken []ExpectExerciseResponse `json:"exercise_taken"`
 }
 
 type ExpectExerciseResponse struct {

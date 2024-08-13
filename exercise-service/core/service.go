@@ -5,7 +5,9 @@ import (
 	"errors"
 	"exercise-service/model"
 	"sort"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/lib/pq"
 	"github.com/nats-io/nats.go"
@@ -39,6 +41,11 @@ func (service *exerciseService) SaveExercise(r ExerciseRequest) (string, error) 
 	var weekdaysResult pq.Int64Array
 	var startAt *time.Time
 	var endAt *time.Time
+
+	name := strings.TrimSpace(r.Name)
+	if utf8.RuneCountInString(name) > 10 || len(name) == 0 {
+		return "", errors.New("validate name")
+	}
 
 	for _, v := range r.Weekdays {
 		if v == 0 || v > 7 {
@@ -145,25 +152,21 @@ func (service *exerciseService) GetExpects(uid uint) ([]ExerciseTakeResponse, er
 	var responses []ExerciseTakeResponse
 	var user model.User
 
-	// 1. 사용자의 정보를 데이터베이스에서 가져옵니다.
 	if err := service.db.Where("id = ?", uid).First(&user).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
-	// 2. 사용자의 의약품 리스트를 데이터베이스에서 가져옵니다.
 	var exercises []model.Exercise
 	if err := service.db.Where("uid = ? AND is_active = ?", uid, true).Find(&exercises).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
-	// 3. 사용자의 의약품 복용 기록을 데이터베이스에서 가져옵니다.
 	var exerciseTakes []model.ExerciseTake
 	if err := service.db.Where("uid = ?", uid).Find(&exerciseTakes).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
-	// 4. 복용 기록을 날짜와 시간으로 맵핑합니다.
-	//    예: exerciseTakeMap["2024-08-08"]["08:00"] = 1 (복용 기록 ID)
+	//  예: exerciseTakeMap["2024-08-08"]["08:00"] = 1 (복용 기록 ID)
 	exerciseTakeMap := make(map[string]map[string]uint)
 	for _, take := range exerciseTakes {
 		dateStr := take.DateTaken.Format("2006-01-02")
@@ -173,36 +176,29 @@ func (service *exerciseService) GetExpects(uid uint) ([]ExerciseTakeResponse, er
 		exerciseTakeMap[dateStr][take.TimeTaken] = take.ID
 	}
 
-	// 5. 사용자의 가입 날짜부터 오늘까지의 날짜 범위를 생성합니다.
+	// 사용자의 가입 날짜부터 오늘까지의 날짜 범위를 생성합니다.
 	startDate := user.CreatedAt
 	endDate := time.Now()
 	// 날짜별 응답을 저장할 맵
 	responseMap := make(map[string]*ExerciseTakeResponse)
-	// 6. 각 의약품에 대해 복용 스케줄을 생성합니다.
+
 	for _, exercise := range exercises {
 		exerStart := exercise.StartAt
 		exerEnd := exercise.EndAt
 
-		// 6.1. 의약품 시작 날짜가 사용자의 가입 날짜 이전이면 가입 날짜로 설정합니다.
 		if exerStart == nil || exerStart.Before(startDate) {
 			exerStart = &startDate
 		}
-
-		// 6.2. 의약품 종료 날짜가 오늘 날짜 이후이면 오늘 날짜로 설정합니다.
 		if exerEnd == nil || exerEnd.After(endDate) {
 			exerEnd = &endDate
 		}
-
-		// 7. 의약품의 복용 기간 동안 반복합니다.
 		for d := *exerStart; !d.After(*exerEnd); d = d.AddDate(0, 0, 1) {
 			weekDay := int(d.Weekday())
 
-			// 7.1. 해당 날짜의 요일이 의약품의 복용 요일에 포함되는지 확인합니다.
 			if contains(exercise.Weekdays, int64(weekDay)) {
 				dateStr := d.Format("2006-01-02")
 				timeTaken := make(map[string]*uint)
 
-				// 7.2. 의약품의 각 복용 시간에 대해 복용 기록을 확인합니다.
 				for _, timeStr := range exercise.Times {
 					var takeId *uint
 					if val, exists := exerciseTakeMap[dateStr][timeStr]; exists {
@@ -213,14 +209,12 @@ func (service *exerciseService) GetExpects(uid uint) ([]ExerciseTakeResponse, er
 					timeTaken[timeStr] = takeId
 				}
 
-				// 7.3. 해당 날짜에 대한 ExpectMedicineResponse를 생성합니다.
 				response := ExpectExerciseResponse{
 					Id:        exercise.ID,
 					Name:      exercise.Name,
 					TimeTaken: timeTaken,
 				}
 
-				// 7. 해당 날짜의 응답을 맵에서 가져오거나 새로 만듭니다.
 				if _, exists := responseMap[dateStr]; !exists {
 					responseMap[dateStr] = &ExerciseTakeResponse{
 						DateTaken:     dateStr,
@@ -228,7 +222,6 @@ func (service *exerciseService) GetExpects(uid uint) ([]ExerciseTakeResponse, er
 					}
 				}
 
-				// 8. 해당 날짜의 응답에 추가합니다.
 				responseMap[dateStr].ExerciseTaken = append(responseMap[dateStr].ExerciseTaken, response)
 			}
 		}
@@ -238,26 +231,25 @@ func (service *exerciseService) GetExpects(uid uint) ([]ExerciseTakeResponse, er
 	for _, response := range responseMap {
 		responses = append(responses, *response)
 	}
-	// 8. 모든 복용 기록을 처리하여 응답에 포함합니다.
+
 	for _, take := range exerciseTakes {
 		dateStr := take.DateTaken.Format("2006-01-02")
 		timeStr := take.TimeTaken
 
 		var found bool
 
-		// 8.1. 이미 응답에 해당 날짜의 기록이 있는지 확인합니다.
-		for i, res := range responses { // 1. responses 리스트에서 각 응답(res)을 순회합니다.
-			if res.DateTaken == dateStr { // 2. 응답의 날짜가 현재 복용 기록의 날짜와 같은지 확인합니다.
-				for j, exerRes := range res.ExerciseTaken { // 3. 해당 날짜의 MedicineTaken 리스트를 순회합니다.
-					if exerRes.Id == take.ExerciseID { // 4. 해당 MedicineTaken의 ID가 현재 복용 기록의 MedicineID와 같은지 확인합니다.
-						responses[i].ExerciseTaken[j].TimeTaken[timeStr] = &take.ID // 5. 같은 약물 기록이 있으면, 해당 시간의 복용 기록 ID를 업데이트합니다.
-						found = true                                                // 6. 업데이트가 완료되었음을 표시합니다.
-						break                                                       // 7. 내부 루프를 탈출합니다.
+		for i, res := range responses {
+			if res.DateTaken == dateStr {
+				for j, exerRes := range res.ExerciseTaken {
+					if exerRes.Id == take.ExerciseID {
+						responses[i].ExerciseTaken[j].TimeTaken[timeStr] = &take.ID
+						found = true
+						break
 					}
 				}
 			}
 			if found {
-				break // 8. 외부 루프를 탈출합니다.
+				break //
 			}
 		}
 
