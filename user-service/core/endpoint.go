@@ -50,10 +50,21 @@ func VerifyEndpoint(s UserService) endpoint.Endpoint {
 	}
 }
 
-func SendCodeEndpoint(s UserService) endpoint.Endpoint {
+func SendCodeForSignInEndpoint(s UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		number := request.(string)
-		code, err := s.sendAuthCode(number)
+		code, err := s.sendAuthCodeForSingin(number)
+		if err != nil {
+			return BasicResponse{Code: err.Error()}, err
+		}
+		return BasicResponse{Code: code}, nil
+	}
+}
+
+func SendCodeForLoginEndpoint(s UserService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		number := request.(string)
+		code, err := s.sendAuthCodeForLogin(number)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}

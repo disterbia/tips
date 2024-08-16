@@ -5,13 +5,7 @@ package core
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
-	"io"
 	"log"
-	"math/rand"
-	"net/http"
-	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,7 +24,8 @@ type UserService interface {
 	phoneLogin(request PhoneLoginRequest) (string, error)
 	autoLogin(request AutoLoginRequest) (string, error)
 	verifyAuthCode(number, code string) (string, error)
-	sendAuthCode(number string) (string, error)
+	sendAuthCodeForSingin(number string) (string, error)
+	sendAuthCodeForLogin(number string) (string, error)
 	updateUser(request UserRequest) (string, error)
 	GetUser(id uint) (UserResponse, error)
 	LinkEmail(uid uint, idToken string) (string, error)
@@ -87,52 +82,61 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 	}
 
 	var user model.User
-	result := service.db.Where("email = ? ", email).First(&user)
-
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		// 연동 로그인
-		// 연동 이메일 목록에 없다면 유저생성 (같은번호 있으면 db에서 생성안됨. 같은번호 없으면 회원가입과 같음)
-		var linkedEmail model.LinkedEmail
-		result := service.db.Where("email = ?", email).First(&linkedEmail)
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			// 유효성 검사 수행
-			if err := validateSignIn(request); err != nil {
-				return "", errors.New("-3")
-			}
-			if err := service.db.Where("phone = ?", request.Phone).First(&model.VerifiedNumbers{}).Error; err != nil {
+	if err := service.db.Where("email = ? ", email).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 연동 로그인
+			// 연동 이메일 목록에 없다면 유저생성 (같은번호 있으면 db에서 생성안됨. 같은번호 없으면 회원가입과 같음)
+			var linkedEmail model.LinkedEmail
+			if err := service.db.Where("email = ?", email).First(&linkedEmail).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return "", errors.New("-1") // 인증해야함
-				}
-				return "", errors.New("db error")
-			}
+					// 유효성 검사 수행
+					if err := validateSignIn(request); err != nil {
+						return "", errors.New("-2")
+					}
+					now := time.Now()
+					thirtyMinutesAgo := now.Add(-30 * time.Minute)
 
-			birthday, err := time.Parse("2006-01-02", request.Birthday)
-			if err != nil {
-				return "", errors.New("-3")
-			}
+					if err := service.db.Where("phone = ? AND created_at >= ?", request.Phone, thirtyMinutesAgo).Last(&model.VerifiedNumbers{}).Error; err != nil {
+						if errors.Is(err, gorm.ErrRecordNotFound) {
+							return "", errors.New("-1") // 인증해야함
+						}
+						return "", errors.New("db error")
+					}
 
-			user = model.User{Name: request.Name, Email: &email, SnsType: snsType, DeviceID: request.DeviceID, FCMToken: request.FCMToken, Phone: request.Phone, Gender: request.Gender,
-				Birthday: birthday, UserType: request.UserType}
-			if err := service.db.Create(&user).Error; err != nil {
-				if errors.Is(err, gorm.ErrDuplicatedKey) {
-					return "", errors.New("-2") //이미 가입된 번호
+					birthday, err := time.Parse("2006-01-02", request.Birthday)
+					if err != nil {
+						return "", errors.New("-2")
+					}
+
+					user = model.User{Name: request.Name, Email: &email, SnsType: snsType, DeviceID: request.DeviceID, FCMToken: request.FCMToken, Phone: request.Phone, Gender: request.Gender,
+						Birthday: birthday, UserType: request.UserType}
+					if err := service.db.Create(&user).Error; err != nil {
+						if errors.Is(err, gorm.ErrDuplicatedKey) {
+							if err := service.db.Where("phone = ? ", request.Phone).First(&user).Error; err != nil {
+								return "", errors.New("db error2")
+							}
+							return "", errors.New(strconv.Itoa(int(user.SnsType))) // 이미 가입된 번호
+						}
+						return "", errors.New("db error3")
+					}
+				} else {
+					return "", errors.New("db error4")
+					// 있다면 해당 이메일의 uid로 조회
 				}
-				return "", errors.New("db error3")
 			}
-		} else if result.Error != nil {
-			return "", errors.New("db error4")
-			// 있다면 해당 이메일의 uid로 조회
-		} else {
 			if err := service.db.Where("id = ?", linkedEmail.Uid).First(&user).Error; err != nil {
 				return "", errors.New("db error5")
 			}
 			if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
-				return "", errors.New("db error4")
+				return "", errors.New("db error6")
 			}
+
+		} else {
+			return "", errors.New("db error7")
 		}
 	} else {
 		if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
-			return "", errors.New("db error4")
+			return "", errors.New("db error8")
 		}
 	}
 
@@ -165,29 +169,32 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 
 	var user model.User
 
-	result := service.db.Where("phone = ? ", request.Phone).First(&user)
+	if err := service.db.Where("phone = ? ", request.Phone).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-
-		// 유효성 검사 수행
-		if err := validatePhoneSignIn(request); err != nil {
-			return "", errors.New("-3")
-		}
-
-		birthday, err := time.Parse("2006-01-02", request.Birthday)
-		if err != nil {
-			return "", errors.New("-3")
-		}
-
-		user = model.User{Name: request.Name, DeviceID: request.DeviceID, FCMToken: request.FCMToken, Phone: request.Phone, Gender: request.Gender,
-			Birthday: birthday, UserType: request.UserType}
-		if err := service.db.Create(&user).Error; err != nil {
-			if errors.Is(err, gorm.ErrDuplicatedKey) {
-				return "", errors.New("-2") //이미 가입된 번호
+			// 유효성 검사 수행
+			if err := validatePhoneSignIn(request); err != nil {
+				return "", errors.New("-2")
 			}
-			return "", errors.New("db error3")
+
+			birthday, err := time.Parse("2006-01-02", request.Birthday)
+			if err != nil {
+				return "", errors.New("-2")
+			}
+
+			user = model.User{Name: request.Name, DeviceID: request.DeviceID, FCMToken: request.FCMToken, Phone: request.Phone, Gender: request.Gender,
+				Birthday: birthday, UserType: request.UserType}
+			if err := service.db.Create(&user).Error; err != nil {
+				return "", errors.New("db error3")
+			}
+		} else {
+			return "", errors.New("db error4")
 		}
 	} else {
+		if user.SnsType != 0 {
+			return "", errors.New(strconv.Itoa(int(user.SnsType))) //이미 가입된 번호
+		}
+
 		if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
 			return "", errors.New("db error4")
 		}
@@ -224,7 +231,12 @@ func (service *userService) autoLogin(request AutoLoginRequest) (string, error) 
 	return tokenString, nil
 }
 
-func (service *userService) sendAuthCode(number string) (string, error) {
+func (service *userService) sendAuthCodeForSingin(number string) (string, error) {
+	err := validatePhoneNumber(number)
+	if err != nil {
+		return "", err
+	}
+
 	//존재하는 번호인지 체크
 	result := service.db.Debug().Where("phone = ?", number).Find(&model.User{})
 	if result.Error != nil {
@@ -237,40 +249,31 @@ func (service *userService) sendAuthCode(number string) (string, error) {
 		return "", errors.New("-1")
 	}
 
-	err := validatePhoneNumber(number)
+	code, err := sendCode(number)
+
 	if err != nil {
 		return "", err
 	}
-	var sb strings.Builder
-	for i := 0; i < 6; i++ {
-		fmt.Fprintf(&sb, "%d", rand.Intn(10)) // 0부터 9까지의 숫자를 무작위로 선택
-	}
 
-	apiURL := "https://kakaoapi.aligo.in/akv10/alimtalk/send/"
-	data := url.Values{}
-	data.Set("apikey", os.Getenv("API_KEY"))
-	data.Set("userid", os.Getenv("USER_ID"))
-	data.Set("token", os.Getenv("TOKEN"))
-	data.Set("senderkey", os.Getenv("SENDER_KEY"))
-	data.Set("tpl_code", os.Getenv("TPL_CODE"))
-	data.Set("sender", os.Getenv("SENDER"))
-	data.Set("subject_1", os.Getenv("SUBJECT_1"))
-
-	data.Set("receiver_1", number)
-	data.Set("message_1", "인증번호는 ["+sb.String()+"]"+" 입니다.")
-
-	// HTTP POST 요청 실행
-	resp, err := http.PostForm(apiURL, data)
-	if err != nil {
-		fmt.Printf("HTTP Request Failed: %s\n", err)
+	if err := service.db.Create(&model.AuthCode{Phone: number, Code: code}).Error; err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	return "200", nil
+}
 
-	body, _ := io.ReadAll(resp.Body)
-	log.Println(fmt.Errorf("server returned non-200 status: %d, body: %s", resp.StatusCode, string(body)))
+func (service *userService) sendAuthCodeForLogin(number string) (string, error) {
 
-	if err := service.db.Create(&model.AuthCode{Phone: number, Code: sb.String()}).Error; err != nil {
+	if err := validatePhoneNumber(number); err != nil {
+		return "", err
+	}
+
+	code, err := sendCode(number)
+
+	if err != nil {
+		return "", err
+	}
+
+	if err := service.db.Create(&model.AuthCode{Phone: number, Code: code}).Error; err != nil {
 		return "", err
 	}
 	return "200", nil
@@ -564,7 +567,8 @@ func (service *userService) GetUser(id uint) (UserResponse, error) {
 	}
 
 	var userResponse UserResponse
-	if user.ProfileImages[0].Url != "" {
+
+	if len(user.ProfileImages) > 0 && user.ProfileImages[0].Url != "" { // gorm은 nil이 아닌 빈 슬라이스로 매핑함
 		urlkey := extractKeyFromUrl(user.ProfileImages[0].Url, service.bucket, service.bucketUrl)
 		thumbnailUrlkey := extractKeyFromUrl(user.ProfileImages[0].ThumbnailUrl, service.bucket, service.bucketUrl)
 		// 사전 서명된 URL을 생성

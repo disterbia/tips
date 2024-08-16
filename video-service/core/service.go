@@ -14,9 +14,9 @@ import (
 )
 
 type AdminVideoService interface {
-	GetLevel1s(id uint) ([]VimeoLevel1, error)
-	GetLevel2s(id uint, projectId string) ([]VimeoLevel2, error)
-	SaveVideos(videoData VideoData) (string, error)
+	getLevel1s(id uint) ([]VimeoLevel1, error)
+	getLevel2s(id uint, projectId string) ([]VimeoLevel2, error)
+	saveVideos(videoData VideoData) (string, error)
 }
 
 type adminVideoService struct {
@@ -26,14 +26,14 @@ type adminVideoService struct {
 func NewAdminVideoService(db *gorm.DB) AdminVideoService {
 	return &adminVideoService{db: db}
 }
-func (service *adminVideoService) GetLevel1s(id uint) ([]VimeoLevel1, error) {
+func (service *adminVideoService) getLevel1s(id uint) ([]VimeoLevel1, error) {
 	var user model.User
 	err := service.db.Where("id = ?", id).Find(&user).Error
 	if err != nil {
 		return nil, errors.New("db error")
 	}
 
-	if !user.IsAdmin {
+	if user.RoleID != uint(SUPERROLE) {
 		return nil, errors.New("deny")
 	}
 
@@ -89,14 +89,14 @@ func (service *adminVideoService) GetLevel1s(id uint) ([]VimeoLevel1, error) {
 	return vimeoData, nil // 결과 반환
 }
 
-func (service *adminVideoService) GetLevel2s(id uint, projectId string) ([]VimeoLevel2, error) {
+func (service *adminVideoService) getLevel2s(id uint, projectId string) ([]VimeoLevel2, error) {
 	var user model.User
 	err := service.db.Where("id = ?", id).Find(&user).Error
 	if err != nil {
 		return nil, errors.New("db error")
 	}
 
-	if !user.IsAdmin {
+	if user.RoleID != uint(SUPERROLE) {
 		return nil, errors.New("deny")
 	}
 
@@ -163,14 +163,14 @@ func (service *adminVideoService) GetLevel2s(id uint, projectId string) ([]Vimeo
 	return vimeoData, nil // 결과 반환
 }
 
-func (service *adminVideoService) SaveVideos(videoData VideoData) (string, error) {
+func (service *adminVideoService) saveVideos(videoData VideoData) (string, error) {
 	var user model.User
 	err := service.db.Where("id = ?", videoData.Id).Find(&user).Error
 	if err != nil {
 		return "", errors.New("db error")
 	}
 
-	if !user.IsAdmin {
+	if user.RoleID != uint(SUPERROLE) {
 		return "", errors.New("deny")
 	}
 

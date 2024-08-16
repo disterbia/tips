@@ -6,25 +6,10 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func AdminLoginEndpoint(s InquireService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		reqMap := request.(map[string]interface{})
-		email := reqMap["email"].(string)
-		password := reqMap["password"].(string)
-
-		token, err := s.AdminLogin(email, password)
-
-		if err != nil {
-			return LoginResponse{Err: err.Error()}, err
-		}
-		return LoginResponse{Jwt: token}, nil
-	}
-}
-
 func AnswerEndpoint(s InquireService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		answer := request.(InquireReplyRequest)
-		code, err := s.AnswerInquire(answer)
+		code, err := s.answerInquire(answer)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -35,7 +20,7 @@ func AnswerEndpoint(s InquireService) endpoint.Endpoint {
 func SendEndpoint(s InquireService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		inquire := request.(InquireRequest)
-		code, err := s.SendInquire(inquire)
+		code, err := s.sendInquire(inquire)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -48,7 +33,7 @@ func RemoveInquireEndpoint(s InquireService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		uid := reqMap["uid"].(uint)
-		code, err := s.RemoveInquire(id, uid)
+		code, err := s.removeInquire(id, uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -60,7 +45,7 @@ func RemoveReplyEndpoint(s InquireService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		uid := reqMap["uid"].(uint)
-		code, err := s.RemoveReply(id, uid)
+		code, err := s.removeReply(id, uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -73,7 +58,7 @@ func GetEndpoint(s InquireService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		queryParams := reqMap["queryParams"].(GetInquireParams)
-		inquires, err := s.GetMyInquires(id, queryParams.Page, queryParams.StartDate, queryParams.EndDate)
+		inquires, err := s.getMyInquires(id, queryParams.Page, queryParams.StartDate, queryParams.EndDate)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -86,7 +71,7 @@ func GetAllEndpoint(s InquireService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		queryParams := reqMap["queryParams"].(GetInquireParams)
-		inquires, err := s.GetAllInquires(id, queryParams.Page, queryParams.StartDate, queryParams.EndDate)
+		inquires, err := s.getAllInquires(id, queryParams.Page, queryParams.StartDate, queryParams.EndDate)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}

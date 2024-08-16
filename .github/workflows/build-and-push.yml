@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [gateway,inquire-service,email-service,user-service,medicine-service,notification-service,fcm-service,emotion-service,exercise-service,video-service]
+        service: [gateway,inquire-service,email-service,user-service,medicine-service,notification-service,fcm-service,emotion-service,exercise-service,video-service,admin-service]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

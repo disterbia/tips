@@ -12,9 +12,13 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"log"
 	"math/big"
+	"math/rand"
 	"net/http"
+	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -174,6 +178,39 @@ func validatePhoneSignIn(request PhoneLoginRequest) error {
 		return errors.New("invalid name")
 	}
 	return nil
+}
+
+func sendCode(number string) (string, error) {
+	var sb strings.Builder
+	for i := 0; i < 6; i++ {
+		fmt.Fprintf(&sb, "%d", rand.Intn(10)) // 0부터 9까지의 숫자를 무작위로 선택
+	}
+	apiURL := "https://kakaoapi.aligo.in/akv10/alimtalk/send/"
+	data := url.Values{}
+	data.Set("apikey", os.Getenv("API_KEY"))
+	data.Set("userid", os.Getenv("USER_ID"))
+	data.Set("token", os.Getenv("TOKEN"))
+	data.Set("senderkey", os.Getenv("SENDER_KEY"))
+	data.Set("tpl_code", os.Getenv("TPL_CODE"))
+	data.Set("sender", os.Getenv("SENDER"))
+	data.Set("subject_1", os.Getenv("SUBJECT_1"))
+
+	data.Set("receiver_1", number)
+	data.Set("message_1", "인증번호는 ["+sb.String()+"]"+" 입니다.")
+
+	// HTTP POST 요청 실행
+	resp, err := http.PostForm(apiURL, data)
+	if err != nil {
+		fmt.Printf("HTTP Request Failed: %s\n", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	log.Println(fmt.Errorf("server returned non-200 status: %d, body: %s", resp.StatusCode, string(body)))
+
+	return sb.String(), nil
+
 }
 
 // Apple 공개키 가져오기

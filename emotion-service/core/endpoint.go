@@ -9,7 +9,7 @@ import (
 func SaveEmotionEndpoint(s EmotionService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		emotion := request.(EmotionRequest)
-		code, err := s.SaveEmotion(emotion)
+		code, err := s.saveEmotion(emotion)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -22,7 +22,7 @@ func GetEmotionsEndpoint(s EmotionService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		queryParams := reqMap["queryParams"].(GetEmotionsParams)
-		inquires, err := s.GetEmotions(id, queryParams)
+		inquires, err := s.getEmotions(id, queryParams)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}

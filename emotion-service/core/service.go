@@ -10,8 +10,8 @@ import (
 )
 
 type EmotionService interface {
-	SaveEmotion(request EmotionRequest) (string, error)
-	GetEmotions(id uint, param GetEmotionsParams) ([]EmotionResponse, error)
+	saveEmotion(request EmotionRequest) (string, error)
+	getEmotions(id uint, param GetEmotionsParams) ([]EmotionResponse, error)
 }
 
 type emotionService struct {
@@ -22,7 +22,7 @@ func NewEmotionService(db *gorm.DB) EmotionService {
 	return &emotionService{db: db}
 }
 
-func (service *emotionService) SaveEmotion(request EmotionRequest) (string, error) {
+func (service *emotionService) saveEmotion(request EmotionRequest) (string, error) {
 	// 유효성 검사기 생성
 	validate := validator.New()
 
@@ -68,7 +68,7 @@ func (service *emotionService) SaveEmotion(request EmotionRequest) (string, erro
 	return "200", nil
 }
 
-func (service *emotionService) GetEmotions(id uint, param GetEmotionsParams) ([]EmotionResponse, error) {
+func (service *emotionService) getEmotions(id uint, param GetEmotionsParams) ([]EmotionResponse, error) {
 
 	validate := validator.New()
 

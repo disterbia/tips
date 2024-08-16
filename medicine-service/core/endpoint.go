@@ -9,7 +9,7 @@ import (
 func SaveEndpoint(s MedicineService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		medicine := request.(MedicineRequest)
-		code, err := s.SaveMedicine(medicine)
+		code, err := s.saveMedicine(medicine)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -22,7 +22,7 @@ func RemoveEndpoint(s MedicineService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		uid := reqMap["uid"].(uint)
-		code, err := s.RemoveMedicine(id, uid)
+		code, err := s.removeMedicine(id, uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -33,7 +33,7 @@ func RemoveEndpoint(s MedicineService) endpoint.Endpoint {
 func GetExpectsEndpoint(s MedicineService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		uid := request.(uint)
-		inquires, err := s.GetExpects(uid)
+		inquires, err := s.getExpects(uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -44,7 +44,7 @@ func GetExpectsEndpoint(s MedicineService) endpoint.Endpoint {
 func GetMedicinesEndpoint(s MedicineService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		id := request.(uint)
-		medicines, err := s.GetMedicines(id)
+		medicines, err := s.getMedicines(id)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -55,7 +55,7 @@ func GetMedicinesEndpoint(s MedicineService) endpoint.Endpoint {
 func TakeEndpoint(s MedicineService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		takeMedicine := request.(TakeMedicine)
-		code, err := s.TakeMedicine(takeMedicine)
+		code, err := s.takeMedicine(takeMedicine)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -68,7 +68,7 @@ func UnTakeEndpoint(s MedicineService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		uid := reqMap["uid"].(uint)
-		code, err := s.UnTakeMedicine(id, uid)
+		code, err := s.unTakeMedicine(id, uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -79,7 +79,7 @@ func UnTakeEndpoint(s MedicineService) endpoint.Endpoint {
 func SearchsEndpoint(s MedicineService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		keyword := request.(string)
-		medicines, err := s.SearchMedicines(keyword)
+		medicines, err := s.searchMedicines(keyword)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}

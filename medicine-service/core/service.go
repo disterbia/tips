@@ -16,13 +16,13 @@ import (
 )
 
 type MedicineService interface {
-	SaveMedicine(r MedicineRequest) (string, error)
-	RemoveMedicine(id uint, uid uint) (string, error)
-	GetExpects(id uint) ([]MedicineTakeResponse, error)
-	GetMedicines(id uint) ([]MedicineResponse, error)
-	TakeMedicine(takeMedicine TakeMedicine) (string, error)
-	UnTakeMedicine(id, uid uint) (string, error)
-	SearchMedicines(keyword string) ([]string, error)
+	saveMedicine(r MedicineRequest) (string, error)
+	removeMedicine(id uint, uid uint) (string, error)
+	getExpects(id uint) ([]MedicineTakeResponse, error)
+	getMedicines(id uint) ([]MedicineResponse, error)
+	takeMedicine(takeMedicine TakeMedicine) (string, error)
+	unTakeMedicine(id, uid uint) (string, error)
+	searchMedicines(keyword string) ([]string, error)
 }
 
 type medicineService struct {
@@ -35,7 +35,7 @@ func NewMedicineService(db *gorm.DB, nats *nats.Conn) MedicineService {
 
 }
 
-func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) {
+func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) {
 
 	var weekdays []uint
 	var times []string
@@ -151,7 +151,7 @@ func (service *medicineService) SaveMedicine(r MedicineRequest) (string, error) 
 	return "200", nil
 }
 
-func (service *medicineService) RemoveMedicine(id uint, uid uint) (string, error) {
+func (service *medicineService) removeMedicine(id uint, uid uint) (string, error) {
 	if err := service.db.Where("id =? ", id).Delete(&model.Medicine{}).Error; err != nil {
 		return "", errors.New("db error")
 	}
@@ -160,7 +160,7 @@ func (service *medicineService) RemoveMedicine(id uint, uid uint) (string, error
 	return "200", nil
 }
 
-func (service *medicineService) GetExpects(uid uint) ([]MedicineTakeResponse, error) {
+func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, error) {
 	var responses []MedicineTakeResponse
 	var user model.User
 
@@ -308,7 +308,7 @@ func (service *medicineService) GetExpects(uid uint) ([]MedicineTakeResponse, er
 	return responses, nil
 }
 
-func (service *medicineService) GetMedicines(id uint) ([]MedicineResponse, error) {
+func (service *medicineService) getMedicines(id uint) ([]MedicineResponse, error) {
 	var medicines []model.Medicine
 
 	if err := service.db.Where("uid = ?", id).Find(&medicines).Error; err != nil {
@@ -336,7 +336,7 @@ func (service *medicineService) GetMedicines(id uint) ([]MedicineResponse, error
 	return medicineResponses, nil
 }
 
-func (service *medicineService) TakeMedicine(request TakeMedicine) (string, error) {
+func (service *medicineService) takeMedicine(request TakeMedicine) (string, error) {
 	var medicineTake model.MedicineTake
 	var medicine model.Medicine
 
@@ -387,7 +387,7 @@ func (service *medicineService) TakeMedicine(request TakeMedicine) (string, erro
 	return "200", nil
 }
 
-func (service *medicineService) UnTakeMedicine(id, uid uint) (string, error) {
+func (service *medicineService) unTakeMedicine(id, uid uint) (string, error) {
 
 	var medicineTake model.MedicineTake
 	var medicine model.Medicine
@@ -415,7 +415,7 @@ func (service *medicineService) UnTakeMedicine(id, uid uint) (string, error) {
 	return "200", nil
 }
 
-func (service *medicineService) SearchMedicines(keyword string) ([]string, error) {
+func (service *medicineService) searchMedicines(keyword string) ([]string, error) {
 	var names []string
 	err := service.db.Model(&model.MedicineSearch{}).Where("name LIKE ?", "%"+keyword+"%").Pluck("name", &names).Error
 	if err != nil {

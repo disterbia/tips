@@ -20,6 +20,7 @@ services:
       - emotion
       - exercise
       - video
+      - admin
     
   inquire:
     image: disterbia94/tips-inquire-service:latest
@@ -63,6 +64,10 @@ services:
 
   video:
     image: disterbia94/tips-video-service:latest
+    environment:
+      - TZ=Asia/Seoul
+  admin:
+    image: disterbia94/tips-admin-service:latest
     environment:
       - TZ=Asia/Seoul
 

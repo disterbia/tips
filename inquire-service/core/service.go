@@ -15,13 +15,12 @@ import (
 )
 
 type InquireService interface {
-	AdminLogin(email string, password string) (string, error)
-	SendInquire(inquire InquireRequest) (string, error)
-	GetMyInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error)
-	AnswerInquire(answer InquireReplyRequest) (string, error)
-	GetAllInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error)
-	RemoveInquire(id uint, uid uint) (string, error)
-	RemoveReply(id uint, uid uint) (string, error)
+	sendInquire(inquire InquireRequest) (string, error)
+	getMyInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error)
+	answerInquire(answer InquireReplyRequest) (string, error)
+	getAllInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error)
+	removeInquire(id uint, uid uint) (string, error)
+	removeReply(id uint, uid uint) (string, error)
 }
 
 type inquireService struct {
@@ -37,26 +36,7 @@ func NewInquireService(db *gorm.DB, conn *grpc.ClientConn) InquireService {
 	}
 }
 
-func (service *inquireService) AdminLogin(email string, password string) (string, error) {
-	var u model.User
-	if err := service.db.Where("email=? AND phone=?", email, password).First(&u).Error; err != nil {
-		return "", err
-	}
-
-	if u.RoleID != uint(ADMINROLE) {
-		return "", errors.New("not admin")
-	}
-
-	// 새로운 JWT 토큰 생성
-	tokenString, err := generateJWT(u)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
-
-}
-func (service *inquireService) GetMyInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error) {
+func (service *inquireService) getMyInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error) {
 
 	if startDate != "" {
 		if err := validateDate(startDate); err != nil {
@@ -101,7 +81,7 @@ func (service *inquireService) GetMyInquires(id uint, page uint, startDate, endD
 	return inquireResponses, nil
 }
 
-func (service *inquireService) GetAllInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error) {
+func (service *inquireService) getAllInquires(id uint, page uint, startDate, endDate string) ([]InquireResponse, error) {
 
 	if startDate != "" {
 		if err := validateDate(startDate); err != nil {
@@ -153,7 +133,7 @@ func (service *inquireService) GetAllInquires(id uint, page uint, startDate, end
 	return inquireResponses, nil
 }
 
-func (service *inquireService) SendInquire(request InquireRequest) (string, error) {
+func (service *inquireService) sendInquire(request InquireRequest) (string, error) {
 
 	// 유효성 검사기 생성
 	validate := validator.New()
@@ -177,7 +157,7 @@ func (service *inquireService) SendInquire(request InquireRequest) (string, erro
 	return "200", nil
 }
 
-func (service *inquireService) AnswerInquire(request InquireReplyRequest) (string, error) {
+func (service *inquireService) answerInquire(request InquireReplyRequest) (string, error) {
 	var inquire model.Inquire
 
 	if err := service.db.Preload("User").First(&inquire, request.InquireId).Error; err != nil {
@@ -185,14 +165,14 @@ func (service *inquireService) AnswerInquire(request InquireReplyRequest) (strin
 	}
 
 	if request.ReplyType { // true = 답변
-		if inquire.User.RoleID != uint(ADMINROLE) {
+		if inquire.User.RoleID != uint(SUPERROLE) {
 			return "", errors.New("unauthorized: user is not an admin")
 		}
 	} else { // 추가문의
-		if inquire.User.ID != inquire.Uid {
+		if inquire.Uid != request.Uid {
 			return "", errors.New("unauthorized: illegal user")
 		}
-		if inquire.User.RoleID == uint(ADMINROLE) {
+		if inquire.User.RoleID != uint(BASICROLE) {
 			return "", errors.New("unauthorized: can't admin ")
 		}
 	}
@@ -222,7 +202,7 @@ func (service *inquireService) AnswerInquire(request InquireReplyRequest) (strin
 	if err != nil {
 		tx.Rollback()
 		log.Printf("Failed to send email: %v", err)
-		return "", errors.New("Failed to send email")
+		return "", errors.New("failed to send email")
 	}
 
 	log.Printf("send email: %v", reponse)
@@ -231,7 +211,7 @@ func (service *inquireService) AnswerInquire(request InquireReplyRequest) (strin
 	return "200", nil
 }
 
-func (service *inquireService) RemoveInquire(id uint, uid uint) (string, error) {
+func (service *inquireService) removeInquire(id uint, uid uint) (string, error) {
 
 	var inquire model.Inquire
 	if err := service.db.Where("id = ? AND uid = ?", id, uid).Delete(&inquire).Error; err != nil {
@@ -240,7 +220,7 @@ func (service *inquireService) RemoveInquire(id uint, uid uint) (string, error) 
 	return "200", nil
 }
 
-func (service *inquireService) RemoveReply(id uint, uid uint) (string, error) {
+func (service *inquireService) removeReply(id uint, uid uint) (string, error) {
 
 	var inquireReply model.InquireReply
 	if err := service.db.Where("id = ? AND uid = ?", id, uid).Delete(&inquireReply).Error; err != nil {

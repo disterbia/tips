@@ -15,14 +15,14 @@ import (
 )
 
 type ExerciseService interface {
-	SaveExercise(r ExerciseRequest) (string, error)
-	GetExpects(id uint) ([]ExerciseTakeResponse, error)
-	RemoveExercise(id uint, uid uint) (string, error)
-	DoExercise(exerciseDo TakeExercise) (string, error)
-	UndoExercise(id, uid uint) (string, error)
-	GetExercises(id uint) ([]ExerciseResponse, error)
-	GetProjects() ([]ProjectResponse, error)
-	GetVideos(projectId string, page uint) ([]VideoResponse, error)
+	saveExercise(r ExerciseRequest) (string, error)
+	getExpects(id uint) ([]ExerciseTakeResponse, error)
+	removeExercise(id uint, uid uint) (string, error)
+	doExercise(exerciseDo TakeExercise) (string, error)
+	undoExercise(id, uid uint) (string, error)
+	getExercises(id uint) ([]ExerciseResponse, error)
+	getProjects() ([]ProjectResponse, error)
+	getVideos(projectId string, page uint) ([]VideoResponse, error)
 }
 
 type exerciseService struct {
@@ -34,7 +34,7 @@ func NewExerciseService(db *gorm.DB, nats *nats.Conn) ExerciseService {
 	return &exerciseService{db: db, nats: nats}
 }
 
-func (service *exerciseService) SaveExercise(r ExerciseRequest) (string, error) {
+func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) {
 
 	var weekdays []uint
 	var times []string
@@ -139,7 +139,7 @@ func (service *exerciseService) SaveExercise(r ExerciseRequest) (string, error) 
 	return "200", nil
 }
 
-func (service *exerciseService) RemoveExercise(id uint, uid uint) (string, error) {
+func (service *exerciseService) removeExercise(id uint, uid uint) (string, error) {
 	if err := service.db.Where("id =? ", id).Delete(&model.Exercise{}).Error; err != nil {
 		return "", errors.New("db error")
 	}
@@ -148,7 +148,7 @@ func (service *exerciseService) RemoveExercise(id uint, uid uint) (string, error
 	return "200", nil
 }
 
-func (service *exerciseService) GetExpects(uid uint) ([]ExerciseTakeResponse, error) {
+func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, error) {
 	var responses []ExerciseTakeResponse
 	var user model.User
 
@@ -279,7 +279,7 @@ func (service *exerciseService) GetExpects(uid uint) ([]ExerciseTakeResponse, er
 	return responses, nil
 }
 
-func (service *exerciseService) GetExercises(id uint) ([]ExerciseResponse, error) {
+func (service *exerciseService) getExercises(id uint) ([]ExerciseResponse, error) {
 	var exercises []model.Exercise
 
 	if err := service.db.Where("uid = ?", id).Find(&exercises).Error; err != nil {
@@ -307,7 +307,7 @@ func (service *exerciseService) GetExercises(id uint) ([]ExerciseResponse, error
 	return exerciseResponses, nil
 }
 
-func (service *exerciseService) DoExercise(request TakeExercise) (string, error) {
+func (service *exerciseService) doExercise(request TakeExercise) (string, error) {
 
 	_, err := time.Parse("15:04", request.TimeTaken)
 	if err != nil {
@@ -341,7 +341,7 @@ func (service *exerciseService) DoExercise(request TakeExercise) (string, error)
 	return "200", nil
 }
 
-func (service *exerciseService) UndoExercise(id, uid uint) (string, error) {
+func (service *exerciseService) undoExercise(id, uid uint) (string, error) {
 
 	if err := service.db.Where("id = ? AND uid = ?", id, uid).Unscoped().Delete(&model.ExerciseTake{}).Error; err != nil {
 		return "", errors.New("db error")
@@ -350,7 +350,7 @@ func (service *exerciseService) UndoExercise(id, uid uint) (string, error) {
 	return "200", nil
 }
 
-func (service *exerciseService) GetProjects() ([]ProjectResponse, error) {
+func (service *exerciseService) getProjects() ([]ProjectResponse, error) {
 
 	var projects []ProjectResponse
 	err := service.db.Model(&model.Video{}).
@@ -366,7 +366,7 @@ func (service *exerciseService) GetProjects() ([]ProjectResponse, error) {
 
 // face-service 의 face-exercise 쪽에는 한번에 다가져옴
 
-func (service *exerciseService) GetVideos(projectId string, page uint) ([]VideoResponse, error) {
+func (service *exerciseService) getVideos(projectId string, page uint) ([]VideoResponse, error) {
 	pageSize := 20
 	var videos []model.Video
 	offset := page * uint(pageSize)

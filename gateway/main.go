@@ -74,6 +74,7 @@ func main() {
 
 	// 서비스로의 리버스 프록시 설정
 
+	setupProxy(app, "/admin/*", "http://admin:44400")
 	setupProxy(app, "/emotion/*", "http://emotion:44404")
 	setupProxy(app, "/exercise/*", "http://exercise:44405")
 	setupProxy(app, "/inquire/*", "http://inquire:44406")
@@ -83,6 +84,7 @@ func main() {
 	setupProxy(app, "/video/*", "http://video:44410")
 
 	// Swagger UI 프록시 설정
+	setupSwaggerUIProxy(app, "/admin-service/swagger/*", "http://admin:44400/swagger")
 	setupSwaggerUIProxy(app, "/emotion-service/swagger/*", "http://emotion:44404/swagger")
 	setupSwaggerUIProxy(app, "/exercise-service/swagger/*", "http://exercise:44405/swagger")
 	setupSwaggerUIProxy(app, "/inquire-service/swagger/*", "http://inquire:44406/swagger")
@@ -113,6 +115,9 @@ func main() {
 
 		} else if strings.Contains(referer, "/video-service/") {
 			return c.Redirect("/video-service/swagger/doc.json")
+
+		} else if strings.Contains(referer, "/admin-service/") {
+			return c.Redirect("/admin-service/swagger/doc.json")
 		}
 		return c.SendStatus(fiber.StatusNotFound)
 	})

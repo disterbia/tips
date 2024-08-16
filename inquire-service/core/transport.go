@@ -10,38 +10,6 @@ import (
 
 var userLocks sync.Map
 
-// @Tags 로그인 /inquire
-// @Summary 관리자 로그인
-// @Description 관리자 로그인시 호출
-// @Accept  json
-// @Produce  json
-// @Param email body string true "email"
-// @Param password body string true "password"
-// @Success 200 {object} SuccessResponse "성공시 JWT 토큰 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /login [post]
-func AdminLoginHandler(endpoint endpoint.Endpoint) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var req map[string]interface{}
-		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
-		email := req["email"].(string)
-		password := req["password"].(string)
-		response, err := endpoint(c.Context(), map[string]interface{}{
-			"email":    email,
-			"password": password,
-		})
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-
-		}
-
-		resp := response.(LoginResponse)
-		return c.Status(fiber.StatusOK).JSON(resp)
-	}
-}
-
 // @Tags 문의 /inquire
 // @Summary 답변/추가문의
 // @Description 답변/추가문의 등록시 호출

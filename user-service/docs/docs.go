@@ -238,7 +238,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "요청 처리 실패시 오류 메시지 반환: 오류메시지 \"-1\" = 인증필요 , \"-2\" = 이미 가입한 번호,  \"-3\" = 추가정보 입력 필요",
+                        "description": "요청 처리 실패시 오류 메시지 반환: 오류메시지 KAKAO=1, GOOGLE=2, APPLE=3 / '-1' = 인증필요 , '-2' = 추가정보 입력 필요 ",
                         "schema": {
                             "$ref": "#/definitions/core.ErrorResponse"
                         }
@@ -290,9 +290,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/send-code/{number}": {
+        "/send-code-join/{number}": {
             "post": {
-                "description": "인증번호 발송시 호출",
+                "description": "회원가입 인증번호 발송시 호출",
                 "consumes": [
                     "application/json"
                 ],
@@ -334,9 +334,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/sns-login": {
+        "/send-code-login/{number}": {
             "post": {
-                "description": "sns 로그인 성공시 호출",
+                "description": "휴대번호 로그인 인증번호 발송시 호출",
                 "consumes": [
                     "application/json"
                 ],
@@ -344,25 +344,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "로그인 /user"
+                    "인증번호 /user"
                 ],
-                "summary": "sns 로그인",
+                "summary": "인증번호 발송",
                 "parameters": [
                     {
-                        "description": "요청 DTO - idToken 필수, user- user_type: 0:해당없음, 1~6:파킨슨 환자, 10:보호자 / 최초 로그인 이후 로그인시 fcm_token,device_id 만 필요함",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/core.LoginRequest"
-                        }
+                        "type": "string",
+                        "description": "휴대번호",
+                        "name": "number",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "성공시 JWT 토큰 반환",
+                        "description": "성공시 200 반환",
                         "schema": {
-                            "$ref": "#/definitions/core.SuccessResponse"
+                            "$ref": "#/definitions/core.BasicResponse"
                         }
                     },
                     "400": {
@@ -370,14 +368,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/core.ErrorResponse"
                         }
-                    },
-                    "500": {
-                        "description": "요청 처리 실패시 오류 메시지 반환: 오류메시지 \"-1\" = 인증필요 , \"-2\" = 이미 가입한 번호,  \"-3\" = 추가정보 입력 필요",
-                        "schema": {
-                            "$ref": "#/definitions/core.ErrorResponse"
-                        }
                     }
                 }
+            }
+        },
+        "/sns-login": {
+            "post": {
+                "responses": {}
             }
         },
         "/update-user": {
@@ -548,36 +545,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "sns_type": {
-                    "type": "integer"
-                }
-            }
-        },
-        "core.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "birthday": {
-                    "type": "string",
-                    "example": "yyyy-mm-dd"
-                },
-                "device_id": {
-                    "type": "string"
-                },
-                "fcm_token": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "boolean"
-                },
-                "id_token": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "user_type": {
                     "type": "integer"
                 }
             }

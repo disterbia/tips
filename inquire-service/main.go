@@ -36,7 +36,6 @@ func main() {
 	defer conn.Close()
 
 	inquireSvc := core.NewInquireService(database, conn)
-	adminLoginEndpoint := core.AdminLoginEndpoint(inquireSvc)
 	answerEndpoint := core.AnswerEndpoint(inquireSvc)
 	sendEndpoint := core.SendEndpoint(inquireSvc)
 	getEndpoint := core.GetEndpoint(inquireSvc)
@@ -56,7 +55,6 @@ func main() {
 	// CORS 미들웨어 추가
 	app.Use(cors.New())
 
-	app.Post("/login", core.AdminLoginHandler(adminLoginEndpoint))
 	app.Post("/inquire-reply", core.AnswerHandler(answerEndpoint))
 	app.Post("/send-inquire", core.SendHandler(sendEndpoint))
 	app.Post("/remove-inquire/:id", core.RemoveInquireHandler(removeInquireEndpoint))

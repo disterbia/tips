@@ -3,7 +3,6 @@ package core
 import (
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
@@ -49,36 +48,6 @@ func int64ArrayToUintSlice(int64Array pq.Int64Array) []uint {
 		uintSlice[i] = uint(v)
 	}
 	return uintSlice
-}
-func validateMedicine(medicine MedicineRequest) error {
-	if medicine.StartAt != "" {
-		if err := validateDate(medicine.StartAt); err != nil {
-			return err
-		}
-	}
-	if medicine.EndAt != "" {
-		if err := validateDate(medicine.EndAt); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func validateDate(dateStr string) error {
-	_, err := time.Parse("2006-01-02", dateStr)
-	if err != nil {
-		return errors.New("invalid date format, should be YYYY-MM-DD")
-	}
-	return nil
-}
-
-func validateTime(timeStr string) error {
-	_, err := time.Parse("15:04", timeStr)
-	if err != nil {
-		return errors.New("invalid time format, should be HH:MM")
-	}
-	return nil
 }
 
 // 배열에 특정 값이 포함되어 있는지 확인하는 함수

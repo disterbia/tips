@@ -9,7 +9,7 @@ import (
 func SaveExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		exercise := request.(ExerciseRequest)
-		code, err := s.SaveExercise(exercise)
+		code, err := s.saveExercise(exercise)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -20,7 +20,7 @@ func SaveExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 func GetExpectsEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		uid := request.(uint)
-		inquires, err := s.GetExpects(uid)
+		inquires, err := s.getExpects(uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -31,7 +31,7 @@ func GetExpectsEndpoint(s ExerciseService) endpoint.Endpoint {
 func GetExercisesEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		id := request.(uint)
-		medicines, err := s.GetExercises(id)
+		medicines, err := s.getExercises(id)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -44,7 +44,7 @@ func RemoveExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
 		uid := reqMap["uid"].(uint)
-		code, err := s.RemoveExercise(id, uid)
+		code, err := s.removeExercise(id, uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -55,7 +55,7 @@ func RemoveExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 func DoExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		exercise := request.(TakeExercise)
-		code, err := s.DoExercise(exercise)
+		code, err := s.doExercise(exercise)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -65,7 +65,7 @@ func DoExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 
 func GetProjectsEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		projects, err := s.GetProjects()
+		projects, err := s.getProjects()
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -76,7 +76,7 @@ func GetProjectsEndpoint(s ExerciseService) endpoint.Endpoint {
 func GetVideosEndpoint(s ExerciseService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		reqMap := request.(GetVideoParams)
-		videos, err := s.GetVideos(reqMap.ProjectId, reqMap.Page)
+		videos, err := s.getVideos(reqMap.ProjectId, reqMap.Page)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
