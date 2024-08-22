@@ -3,6 +3,7 @@ package core
 import (
 	"emotion-service/model"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -47,12 +48,19 @@ func (service *emotionService) saveEmotion(request EmotionRequest) (string, erro
 		return "", errors.New("invalid TargetDate")
 	}
 
-	var emotion model.Emotion
-	if err := service.db.Where("id = ? AND uid = ? ", request.Id, request.Uid).First(&emotion).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", errors.New("db error")
-		}
+	tx := service.db.Begin()
 
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Printf("Recovered from panic: %v", r)
+		}
+	}()
+
+	var emotion model.Emotion
+	if err := tx.Where("target_date = ? AND uid = ? ", targetDate, request.Uid).Delete(&model.Emotion{}).Error; err != nil {
+		tx.Rollback()
+		return "", errors.New("db error")
 	}
 
 	emotion.Uid = request.Uid
@@ -61,10 +69,11 @@ func (service *emotionService) saveEmotion(request EmotionRequest) (string, erro
 	emotion.Memo = request.Memo
 	emotion.TargetDate = targetDate
 
-	if err := service.db.Save(&emotion).Error; err != nil {
+	if err := tx.Create(&emotion).Error; err != nil {
+		tx.Rollback()
 		return "", errors.New("db error2")
 	}
-
+	tx.Commit()
 	return "200", nil
 }
 
@@ -83,7 +92,7 @@ func (service *emotionService) getEmotions(id uint, param GetEmotionsParams) ([]
 
 	var emotionResponses []EmotionResponse
 	for _, v := range emotions {
-		emotionResponses = append(emotionResponses, EmotionResponse{Id: v.ID, Emotion: v.Emotion, Symptoms: int64ArrayToUintSlice(v.Symptoms), Memo: v.Memo, TargetDate: v.TargetDate.Format("2006-01-02")})
+		emotionResponses = append(emotionResponses, EmotionResponse{Emotion: v.Emotion, Symptoms: int64ArrayToUintSlice(v.Symptoms), Memo: v.Memo, TargetDate: v.TargetDate.Format("2006-01-02")})
 	}
 
 	return emotionResponses, nil

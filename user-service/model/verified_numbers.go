@@ -4,8 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type VerifiedNumbers struct {
+type VerifiedTarget struct {
 	gorm.Model
-	Id    uint
 	Phone string
 }

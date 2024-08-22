@@ -14,11 +14,14 @@ type User struct {
 	DeviceID   string
 	FCMToken   string
 	SnsType    uint
-	Phone      string
+	Phone      string `gorm:"unique"`
 	Gender     bool
 	Birthday   time.Time `gorm:"type:date"`
 	UserType   uint
 	Role       Role `gorm:"foreignKey:RoleID"`
 	RoleID     uint
 	IsApproval *bool
+	Hospital   Hospital `gorm:"foreignKey:HospitalID"`
+	HospitalID *uint
+	Major      *string
 }

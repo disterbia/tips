@@ -5,7 +5,6 @@ type GetEmotionsParams struct {
 	EndDate   string `query:"end_date" example:"yyyy-mm-dd" validate:"required,datetime=2006-01-02"`
 }
 type EmotionRequest struct {
-	Id         uint   `json:"id"`
 	Uid        uint   `json:"-"`
 	Emotion    uint   `json:"emotion" validate:"required,min=1,max=5"`
 	Symptoms   []uint `json:"symptoms"`
@@ -14,7 +13,6 @@ type EmotionRequest struct {
 }
 
 type EmotionResponse struct {
-	Id         uint   `json:"id"`
 	Emotion    uint   `json:"emotion"`
 	Symptoms   []uint `json:"symptoms"`
 	Memo       string `json:"memo"`

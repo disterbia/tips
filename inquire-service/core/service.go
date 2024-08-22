@@ -172,7 +172,7 @@ func (service *inquireService) answerInquire(request InquireReplyRequest) (strin
 		if inquire.Uid != request.Uid {
 			return "", errors.New("unauthorized: illegal user")
 		}
-		if inquire.User.RoleID != uint(BASICROLE) {
+		if inquire.User.RoleID == uint(ADMINROLE) || inquire.User.RoleID == uint(SUPERROLE) {
 			return "", errors.New("unauthorized: can't admin ")
 		}
 	}

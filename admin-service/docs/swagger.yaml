@@ -1,7 +1,72 @@
 definitions:
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
   core.ErrorResponse:
     properties:
       err:
+        type: string
+    type: object
+  core.FindIdRequest:
+    properties:
+      birthday:
+        example: yyyy-mm-dd
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  core.FindPasswordRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      phone:
+        example: 이메일로 찾기시 생략
+        type: string
+    type: object
+  core.FindPwRequest:
+    properties:
+      email:
+        type: string
+      phone:
+        example: 이메일로 찾기시 생략
+        type: string
+    type: object
+  core.HospitalResponse:
+    properties:
+      name:
+        type: string
+      number:
+        type: string
+    type: object
+  core.PolicyResponse:
+    properties:
+      body:
+        type: string
+      title:
+        type: string
+    type: object
+  core.SignInRequest:
+    properties:
+      birthday:
+        example: yyyy-mm-dd
+        type: string
+      email:
+        type: string
+      hospital_id:
+        type: integer
+      major:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone:
         type: string
     type: object
   core.SuccessResponse:
@@ -9,14 +74,108 @@ definitions:
       jwt:
         type: string
     type: object
+  core.VerifyRequest:
+    properties:
+      code:
+        example: 인증번호 6자리
+        type: string
+      phone_number:
+        example: "01000000000"
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /change-pw:
+    post:
+      consumes:
+      - application/json
+      description: 비밀번호 변경시 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.FindPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환 -1: 인증필요 , -2: invalid pw'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 비밀번호 변경
+      tags:
+      - 비밀번호 찾기 /admin
+  /find-id:
+    post:
+      consumes:
+      - application/json
+      description: 아이디 찾기시 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.FindIdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 email 반환
+          schema:
+            type: string
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환 -1: 인증필요 , -2: invalid pw'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 아이디 찾기
+      tags:
+      - 아이디 찾기 /admin
+  /get-policies:
+    get:
+      consumes:
+      - application/json
+      description: 이용약관 내용 조회시 호출
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 정책정보
+          schema:
+            items:
+              $ref: '#/definitions/core.PolicyResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 이용약관 가져오기
+      tags:
+      - 회원가입 /admin
   /login:
     post:
       consumes:
       - application/json
-      description: 관리자 로그인시 호출
+      description: 로그인시 호출
       parameters:
       - description: email
         in: body
@@ -37,11 +196,201 @@ paths:
           description: 성공시 JWT 토큰 반환
           schema:
             $ref: '#/definitions/core.SuccessResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환 -1: 승인필요 , -2: 이메일/비밀번호 틀림'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 로그인
+      tags:
+      - 로그인 /admin
+  /search-hospitals:
+    get:
+      consumes:
+      - application/json
+      description: 병원검색시 호출
+      parameters:
+      - description: name
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      - description: page default 0
+        in: body
+        name: page
+        required: true
+        schema:
+          type: integer
+      - description: region_code
+        in: body
+        name: region_code
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 병원정보
+          schema:
+            items:
+              $ref: '#/definitions/core.HospitalResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
         "500":
           description: 요청 처리 실패시 오류 메시지 반환
           schema:
             $ref: '#/definitions/core.ErrorResponse'
-      summary: 관리자 로그인
+      summary: 병원검색
       tags:
-      - 로그인 /inquire
+      - 회원가입 /admin
+  /send-code-id:
+    post:
+      consumes:
+      - application/json
+      description: 아이디 찾기 인증번호 발송시 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.FindIdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환 오류메시지 "-1" 정보 불일치
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 인증번호 발송
+      tags:
+      - 아이디 찾기 /admin
+  /send-code-join/{number}:
+    post:
+      consumes:
+      - application/json
+      description: 회원가입 인증번호 발송시 호출
+      parameters:
+      - description: 휴대번호
+        in: path
+        name: number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 이미 가입한번호'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 인증번호 발송
+      tags:
+      - 회원가입 /admin
+  /send-code-pw:
+    post:
+      consumes:
+      - application/json
+      description: 비밀번호 찾기 시 인증번호 발송시 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.FindPwRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환 오류메시지 "-1" 정보 불일치
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 인증번호 발송
+      tags:
+      - 비밀번호 찾기 /admin
+  /sign-in:
+    post:
+      consumes:
+      - application/json
+      description: 관리자 회원가입시 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환 -1: 인증필요 , -2: invalid body , -3: 이미 가입된
+            이메일'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 회원가입
+      tags:
+      - 회원가입 /admin
+  /verify-code:
+    post:
+      consumes:
+      - application/json
+      description: 인증번호 입력 후 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.VerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: '요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 코드불일치'
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 인증번호 인증
+      tags:
+      - 인증번호 인증 /admin
 swagger: "2.0"

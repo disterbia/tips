@@ -27,6 +27,8 @@ func NewDB(dataSourceName string) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&AuthCode{}, &User{}, &VerifiedNumbers{})
+	db.AutoMigrate(&AuthCode{}, &User{}, &VerifiedTarget{}, &Hospital{}, &Policy{})
+
 	return db, nil
+
 }

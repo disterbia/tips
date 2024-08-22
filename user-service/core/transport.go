@@ -32,8 +32,7 @@ func getClientIP(c *fiber.Ctx) string {
 // @Param request body LoginRequest true "요청 DTO - idToken 필수, user- user_type: 0:해당없음, 1~6:파킨슨 환자, 10:보호자 / 최초 로그인 이후 로그인시 fcm_token,device_id 만 필요함"
 // @Success 200 {object} SuccessResponse "성공시 JWT 토큰 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환: 오류메시지 PHONE=0, KAKAO=1, GOOGLE=2, APPLE=3 / '-1' = 인증필요 , '-2' = 추가정보 입력 필요 "
-
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환: 오류메시지 PHONE=0, KAKAO=1, GOOGLE=2, APPLE=3 / -1 = 인증필요 , -2 = 추가정보 입력 필요 "
 // @Router /sns-login [post]
 func SnsLoginHandler(loginEndpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -60,7 +59,7 @@ func SnsLoginHandler(loginEndpoint endpoint.Endpoint) fiber.Handler {
 // @Param request body PhoneLoginRequest true "요청 DTO user- user_type: 0:해당없음, 1~6:파킨슨 환자, 10:보호자 / 최초 로그인 이후 로그인시 phone,fcm_token,device_id 만 필요함"
 // @Success 200 {object} SuccessResponse "성공시 JWT 토큰 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환: 오류메시지 KAKAO=1, GOOGLE=2, APPLE=3 / '-1' = 인증필요 , '-2' = 추가정보 입력 필요 "
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환: 오류메시지 KAKAO=1, GOOGLE=2, APPLE=3 / -1 = 인증필요 , -2 = 추가정보 입력 필요 "
 // @Router /phone-login [post]
 func PhoneLoginHandler(loginEndpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {

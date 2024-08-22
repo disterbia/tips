@@ -21,8 +21,8 @@ type ExerciseService interface {
 	doExercise(exerciseDo TakeExercise) (string, error)
 	undoExercise(id, uid uint) (string, error)
 	getExercises(id uint) ([]ExerciseResponse, error)
-	getProjects() ([]ProjectResponse, error)
-	getVideos(projectId string, page uint) ([]VideoResponse, error)
+	// getProjects() ([]ProjectResponse, error)
+	// getVideos(projectId string, page uint) ([]VideoResponse, error)
 }
 
 type exerciseService struct {
@@ -350,34 +350,34 @@ func (service *exerciseService) undoExercise(id, uid uint) (string, error) {
 	return "200", nil
 }
 
-func (service *exerciseService) getProjects() ([]ProjectResponse, error) {
+// func (service *exerciseService) getProjects() ([]ProjectResponse, error) {
 
-	var projects []ProjectResponse
-	err := service.db.Model(&model.Video{}).
-		Select("project_id, project_name as name, count(*) as count").
-		Group("project_id").Scan(&projects).Error
+// 	var projects []ProjectResponse
+// 	err := service.db.Model(&model.Video{}).
+// 		Select("project_id, project_name as name, count(*) as count").
+// 		Group("project_id").Scan(&projects).Error
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return projects, nil
-}
+// 	return projects, nil
+// }
 
-// face-service 의 face-exercise 쪽에는 한번에 다가져옴
+// // face-service 의 face-exercise 쪽에는 한번에 다가져옴
 
-func (service *exerciseService) getVideos(projectId string, page uint) ([]VideoResponse, error) {
-	pageSize := 20
-	var videos []model.Video
-	offset := page * uint(pageSize)
-	if err := service.db.Where("project_id = ?", projectId).Offset(int(offset)).Limit(pageSize).Order("id DESC").Find(&videos).Error; err != nil {
-		return nil, errors.New("db error")
-	}
+// func (service *exerciseService) getVideos(projectId string, page uint) ([]VideoResponse, error) {
+// 	pageSize := 20
+// 	var videos []model.Video
+// 	offset := page * uint(pageSize)
+// 	if err := service.db.Where("project_id = ?", projectId).Offset(int(offset)).Limit(pageSize).Order("id DESC").Find(&videos).Error; err != nil {
+// 		return nil, errors.New("db error")
+// 	}
 
-	var videoResponses []VideoResponse
-	for _, v := range videos {
-		videoResponses = append(videoResponses, VideoResponse{Name: v.Name, VideoId: v.VideoId, ThumbnailUrl: v.ThumbnailUrl, Duration: v.Duration})
-	}
+// 	var videoResponses []VideoResponse
+// 	for _, v := range videos {
+// 		videoResponses = append(videoResponses, VideoResponse{Name: v.Name, VideoId: v.VideoId, ThumbnailUrl: v.ThumbnailUrl, Duration: v.Duration})
+// 	}
 
-	return videoResponses, nil
-}
+// 	return videoResponses, nil
+// }

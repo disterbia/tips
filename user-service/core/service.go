@@ -96,7 +96,7 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 					now := time.Now()
 					thirtyMinutesAgo := now.Add(-30 * time.Minute)
 
-					if err := service.db.Where("phone = ? AND created_at >= ?", request.Phone, thirtyMinutesAgo).Last(&model.VerifiedNumbers{}).Error; err != nil {
+					if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, thirtyMinutesAgo).Last(&model.VerifiedTarget{}).Error; err != nil {
 						if errors.Is(err, gorm.ErrRecordNotFound) {
 							return "", errors.New("-1") // 인증해야함
 						}
@@ -154,9 +154,9 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 	}
 	now := time.Now()
 	threeMinutesAgo := now.Add(-3 * time.Minute)
-	var verify model.VerifiedNumbers
+	var verify model.VerifiedTarget
 
-	if err := service.db.Where("phone = ? AND created_at >= ?", request.Phone, threeMinutesAgo).Last(&verify).Error; err != nil {
+	if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, threeMinutesAgo).Last(&verify).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "", errors.New("-1") // 인증해야함
 		}
@@ -290,10 +290,26 @@ func (service *userService) verifyAuthCode(number, code string) (string, error) 
 	if authCode.Code != code {
 		return "", errors.New("-1")
 	}
-	if err := service.db.Create(&model.VerifiedNumbers{Phone: authCode.Phone}).Error; err != nil {
+
+	tx := service.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Printf("Recovered from panic: %v", r)
+		}
+	}()
+
+	if err := tx.Where("phone = ?", authCode.Phone).Unscoped().Delete(&model.AuthCode{}).Error; err != nil {
+		tx.Rollback()
+		return "", errors.New("db error3")
+	}
+
+	if err := tx.Create(&model.VerifiedTarget{Phone: authCode.Phone}).Error; err != nil {
+		tx.Rollback()
 		return "", errors.New("db error2")
 	}
 
+	tx.Commit()
 	return "200", nil
 }
 
@@ -318,9 +334,9 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 	if user.Phone != request.Phone {
 		now := time.Now()
 		threeMinutesAgo := now.Add(-3 * time.Minute)
-		var verify model.VerifiedNumbers
+		var verify model.VerifiedTarget
 
-		if err := service.db.Where("phone = ? AND created_at >= ?", request.Phone, threeMinutesAgo).Last(&verify).Error; err != nil {
+		if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, threeMinutesAgo).Last(&verify).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return "", errors.New("-1") // 인증해야함
 			}

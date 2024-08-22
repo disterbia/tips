@@ -38,6 +38,15 @@ func main() {
 
 	svc := core.NewAdminService(database, conn)
 	loginEndpoint := core.LoginEndpoint(svc)
+	singInEndpoint := core.SignInEndpoint(svc)
+	searchHospitalsEndpoint := core.SearchHospitalsEndpoint(svc)
+	getPoliciesEndpoint := core.GetPoliciesEndpoint(svc)
+	verifyEndpoint := core.VerifyEndpoint(svc)
+	sendCodeForSigninEndpoint := core.SendCodeForSignInEndpoint(svc)
+	sendCodeForIdEndpoint := core.SendCodeForIdEndpoint(svc)
+	sendCodeForPwEndpoint := core.SendCodeForPwEndpoint(svc)
+	changwPwEndpoint := core.ChangePwEndpoint(svc)
+	findIdEndpoint := core.FindIdEndpoint(svc)
 
 	app := fiber.New()
 	app.Use(logger.New())
@@ -50,7 +59,17 @@ func main() {
 	// CORS 미들웨어 추가
 	app.Use(cors.New())
 
+	app.Get("/search-hospitals", core.SearchHospitalsHandler(searchHospitalsEndpoint))
+	app.Get("/get-policies", core.GetPoliciesHandler(getPoliciesEndpoint))
+
 	app.Post("/login", core.LoginHandler(loginEndpoint))
+	app.Post("/sign-in", core.SignInHandler(singInEndpoint))
+	app.Post("/send-code-sign/:number", core.SendCodeForSignInHandler(sendCodeForSigninEndpoint))
+	app.Post("/send-code-id", core.SendCodeForIdHandler(sendCodeForIdEndpoint))
+	app.Post("/send-code-pw", core.SendCodeForPwHandler(sendCodeForPwEndpoint))
+	app.Post("/verify-code", core.VerifyHandler(verifyEndpoint))
+	app.Post("/find-id", core.FindIdHandler(findIdEndpoint))
+	app.Post("/change-pw", core.ChangePwHandler(changwPwEndpoint))
 
 	log.Fatal(app.Listen(":44400"))
 

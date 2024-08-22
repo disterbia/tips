@@ -224,61 +224,61 @@ func UnDoHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	}
 }
 
-// @Tags 운동 /exercise
-// @Summary 운동 동영상 카테고리 조회
-// @Description 운동 동영상 카테고리 조회시 호출
-// @Produce  json
-// @Param Authorization header string true "Bearer {jwt_token}"
-// @Success 200 {object} []ProjectResponse "카테고리 정보"
-// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /get-projects [get]
-func GetProjectsHandler(endpoint endpoint.Endpoint) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		_, err := verifyJWT(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
+// // @Tags 운동 /exercise
+// // @Summary 운동 동영상 카테고리 조회
+// // @Description 운동 동영상 카테고리 조회시 호출
+// // @Produce  json
+// // @Param Authorization header string true "Bearer {jwt_token}"
+// // @Success 200 {object} []ProjectResponse "카테고리 정보"
+// // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// // @Router /get-projects [get]
+// func GetProjectsHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// 	return func(c *fiber.Ctx) error {
+// 		_, err := verifyJWT(c)
+// 		if err != nil {
+// 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+// 		}
 
-		response, err := endpoint(c.Context(), nil)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
+// 		response, err := endpoint(c.Context(), nil)
+// 		if err != nil {
+// 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+// 		}
 
-		resp := response.([]ProjectResponse)
-		return c.Status(fiber.StatusOK).JSON(resp)
-	}
-}
+// 		resp := response.([]ProjectResponse)
+// 		return c.Status(fiber.StatusOK).JSON(resp)
+// 	}
+// }
 
-// @Tags 운동 /exercise
-// @Summary 카테고리별 운동 동영상 조회 (20개씩)
-// @Description 카테고리별 운동 동영상 조회시 호출
-// @Produce  json
-// @Param Authorization header string true "Bearer {jwt_token}"
-// @Param  project_id  query string  true  "project_id"
-// @Param  page  query uint  false  "페이지 default 0"
-// @Success 200 {object} []VideoResponse "동영상 정보"
-// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /get-videos [get]
-func GetVideosHandler(endpoint endpoint.Endpoint) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		_, err := verifyJWT(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
+// // @Tags 운동 /exercise
+// // @Summary 카테고리별 운동 동영상 조회 (20개씩)
+// // @Description 카테고리별 운동 동영상 조회시 호출
+// // @Produce  json
+// // @Param Authorization header string true "Bearer {jwt_token}"
+// // @Param  project_id  query string  true  "project_id"
+// // @Param  page  query uint  false  "페이지 default 0"
+// // @Success 200 {object} []VideoResponse "동영상 정보"
+// // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// // @Router /get-videos [get]
+// func GetVideosHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// 	return func(c *fiber.Ctx) error {
+// 		_, err := verifyJWT(c)
+// 		if err != nil {
+// 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+// 		}
 
-		var queryParams GetVideoParams
-		if err := c.QueryParser(&queryParams); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
+// 		var queryParams GetVideoParams
+// 		if err := c.QueryParser(&queryParams); err != nil {
+// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+// 		}
 
-		response, err := endpoint(c.Context(), queryParams)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		}
+// 		response, err := endpoint(c.Context(), queryParams)
+// 		if err != nil {
+// 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+// 		}
 
-		resp := response.([]VideoResponse)
-		return c.Status(fiber.StatusOK).JSON(resp)
-	}
-}
+// 		resp := response.([]VideoResponse)
+// 		return c.Status(fiber.StatusOK).JSON(resp)
+// 	}
+// }

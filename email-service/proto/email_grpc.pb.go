@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EmailService_SendEmail_FullMethodName = "/emailservice.EmailService/SendEmail"
+	EmailService_SendEmail_FullMethodName     = "/emailservice.EmailService/SendEmail"
+	EmailService_SendCodeEmail_FullMethodName = "/emailservice.EmailService/SendCodeEmail"
 )
 
 // EmailServiceClient is the client API for EmailService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EmailServiceClient interface {
 	SendEmail(ctx context.Context, in *EmailRequest, opts ...grpc.CallOption) (*EmailResponse, error)
+	SendCodeEmail(ctx context.Context, in *EmailCodeRequest, opts ...grpc.CallOption) (*EmailResponse, error)
 }
 
 type emailServiceClient struct {
@@ -46,11 +48,21 @@ func (c *emailServiceClient) SendEmail(ctx context.Context, in *EmailRequest, op
 	return out, nil
 }
 
+func (c *emailServiceClient) SendCodeEmail(ctx context.Context, in *EmailCodeRequest, opts ...grpc.CallOption) (*EmailResponse, error) {
+	out := new(EmailResponse)
+	err := c.cc.Invoke(ctx, EmailService_SendCodeEmail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EmailServiceServer is the server API for EmailService service.
 // All implementations must embed UnimplementedEmailServiceServer
 // for forward compatibility
 type EmailServiceServer interface {
 	SendEmail(context.Context, *EmailRequest) (*EmailResponse, error)
+	SendCodeEmail(context.Context, *EmailCodeRequest) (*EmailResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }
 
@@ -60,6 +72,9 @@ type UnimplementedEmailServiceServer struct {
 
 func (UnimplementedEmailServiceServer) SendEmail(context.Context, *EmailRequest) (*EmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendEmail not implemented")
+}
+func (UnimplementedEmailServiceServer) SendCodeEmail(context.Context, *EmailCodeRequest) (*EmailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendCodeEmail not implemented")
 }
 func (UnimplementedEmailServiceServer) mustEmbedUnimplementedEmailServiceServer() {}
 
@@ -92,6 +107,24 @@ func _EmailService_SendEmail_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EmailService_SendCodeEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmailCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).SendCodeEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_SendCodeEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).SendCodeEmail(ctx, req.(*EmailCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EmailService_ServiceDesc is the grpc.ServiceDesc for EmailService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +135,10 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendEmail",
 			Handler:    _EmailService_SendEmail_Handler,
+		},
+		{
+			MethodName: "SendCodeEmail",
+			Handler:    _EmailService_SendCodeEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

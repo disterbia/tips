@@ -1,8 +1,8 @@
 package core
 
 type GetParams struct {
-	StartDate string `form:"start_date" example:"YYYY-MM-DD"`
-	EndDate   string `form:"end_date" example:"YYYY-MM-DD"`
+	StartDate string `query:"start_date" example:"YYYY-MM-DD"`
+	EndDate   string `query:"end_date" example:"YYYY-MM-DD"`
 }
 
 type GetVideoParams struct {

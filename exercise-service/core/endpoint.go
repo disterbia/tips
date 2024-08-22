@@ -63,23 +63,23 @@ func DoExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 	}
 }
 
-func GetProjectsEndpoint(s ExerciseService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		projects, err := s.getProjects()
-		if err != nil {
-			return BasicResponse{Code: err.Error()}, err
-		}
-		return projects, nil
-	}
-}
+// func GetProjectsEndpoint(s ExerciseService) endpoint.Endpoint {
+// 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+// 		projects, err := s.getProjects()
+// 		if err != nil {
+// 			return BasicResponse{Code: err.Error()}, err
+// 		}
+// 		return projects, nil
+// 	}
+// }
 
-func GetVideosEndpoint(s ExerciseService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		reqMap := request.(GetVideoParams)
-		videos, err := s.getVideos(reqMap.ProjectId, reqMap.Page)
-		if err != nil {
-			return BasicResponse{Code: err.Error()}, err
-		}
-		return videos, nil
-	}
-}
+// func GetVideosEndpoint(s ExerciseService) endpoint.Endpoint {
+// 	return func(ctx context.Context, request interface{}) (interface{}, error) {
+// 		reqMap := request.(GetVideoParams)
+// 		videos, err := s.getVideos(reqMap.ProjectId, reqMap.Page)
+// 		if err != nil {
+// 			return BasicResponse{Code: err.Error()}, err
+// 		}
+// 		return videos, nil
+// 	}
+// }

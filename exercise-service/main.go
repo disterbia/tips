@@ -45,8 +45,8 @@ func main() {
 	removeExercisesEndpoint := core.RemoveExerciseEndpoint(svc)
 	doExerciseEndpoint := core.DoExerciseEndpoint(svc)
 	getExercisesEndpoint := core.GetExercisesEndpoint(svc)
-	getProjectsEndpoint := core.GetProjectsEndpoint(svc)
-	getVideosEndpoint := core.GetVideosEndpoint(svc)
+	// getProjectsEndpoint := core.GetProjectsEndpoint(svc)
+	// getVideosEndpoint := core.GetVideosEndpoint(svc)
 
 	app := fiber.New()
 	app.Use(logger.New())
@@ -65,8 +65,8 @@ func main() {
 	app.Post("/do-exercise", core.DoExerciseHandler(doExerciseEndpoint))
 	app.Get("/get-takens", core.GetExpectsHandler(getExpectsEndpoint))
 	app.Get("/get-exercises", core.GetExercisesHandler(getExercisesEndpoint))
-	app.Get("/get-projects", core.GetProjectsHandler(getProjectsEndpoint))
-	app.Get("/get-videos", core.GetVideosHandler(getVideosEndpoint))
+	// app.Get("/get-projects", core.GetProjectsHandler(getProjectsEndpoint))
+	// app.Get("/get-videos", core.GetVideosHandler(getVideosEndpoint))
 
 	log.Fatal(app.Listen(":44405"))
 }

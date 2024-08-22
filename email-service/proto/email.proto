@@ -6,6 +6,7 @@ option go_package = "./";
 
 service EmailService {
     rpc SendEmail (EmailRequest) returns (EmailResponse);
+    rpc SendCodeEmail (EmailCodeRequest) returns (EmailResponse);
 }
 
 message EmailRequest {
@@ -15,6 +16,11 @@ message EmailRequest {
     string content = 4;
     string replyContent = 5;
     string replyCreatedAt = 6;
+}
+
+message EmailCodeRequest {
+    string email = 1;
+    string code = 2;
 }
 
 message EmailResponse {

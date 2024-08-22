@@ -4,21 +4,47 @@ type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
-type PhoneLoginRequest struct {
-	Phone    string `json:"phone"`
-	DeviceID string `json:"device_id"`
-	FCMToken string `json:"fcm_token"`
-	Name     string `json:"name"`
-	Birthday string `json:"birthday" example:"yyyy-mm-dd"`
-	Gender   bool   `json:"gender"`
-	UserType uint   `json:"user_type"`
+type SearchParam struct {
+	Keyword    string `json:"keyword"`
+	RegionCode string `json:"region_code" query:"region_code"`
+	Page       uint   `json:"page"`
 }
 
-type AutoLoginRequest struct {
-	Id       uint   `json:"-"`
-	FcmToken string `json:"fcm_token"`
-	DeviceId string `json:"device_id"`
+type HospitalResponse struct {
+	Name   string `json:"name"`
+	Number string `json:"number"`
+}
+
+type PolicyResponse struct {
+	Title string `json:"title"`
+	Body  string `json:"body"`
+}
+
+type SignInRequest struct {
+	Name       string `json:"name"`
+	Phone      string `json:"phone"`
+	Birthday   string `json:"birthday" example:"yyyy-mm-dd"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	HospitalID uint   `json:"hospital_id"`
+	Major      string `json:"major"`
+}
+
+type FindIdRequest struct {
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
+	Birthday string `json:"birthday" example:"yyyy-mm-dd"`
+}
+
+type FindPwRequest struct {
+	Email string `json:"email"`
+	Phone string `json:"phone" example:"이메일로 찾기시 생략"`
+}
+
+type FindPasswordRequest struct {
+	Email    string `json:"email"`
+	Phone    string `json:"phone" example:"이메일로 찾기시 생략"`
+	Password string `json:"password"`
 }
 
 type LoginResponse struct {
