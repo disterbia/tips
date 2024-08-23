@@ -57,46 +57,13 @@ type VerifyRequest struct {
 	Code        string `json:"code" example:"인증번호 6자리"`
 }
 
-type UserRequest struct {
-	ID           uint   `json:"-"`
-	Name         string `json:"name"`
-	ProfileImage string `json:"profile_image" example:"base64string"`
-	Phone        string `json:"phone"`
-	Gender       bool   `json:"gender"`
-	Birthday     string `json:"birthday" example:"yyyy-mm-dd"`
-	UserType     uint   `json:"user_type"`
-}
-
-type UserResponse struct {
-	Name         string           `json:"name"`
-	Birthday     string           `json:"birthday" example:"yyyy-mm-dd"`
-	Phone        string           `json:"phone"`
-	Gender       bool             `json:"gender"` // true:남 false: 여
-	SnsType      uint             `json:"sns_type"`
-	CreatedAt    string           `json:"created_at"`
-	ProfileImage ImageResponse    `json:"profile_image"`
-	LinkedEmails []LinkedResponse `json:"linked_emails"`
-}
-
-type ImageResponse struct {
-	Url          string `json:"url"`
-	ThumbnailUrl string `json:"thumbnail_url"`
-}
-
-type LinkedResponse struct {
-	SnsType uint   `json:"sns_type"`
-	Email   string `json:"email"`
-}
-
-type LinkRequest struct {
-	Id      uint   `json:"-"`
-	IdToken string `json:"id_token"`
-}
-
-type AppVersionResponse struct {
-	LatestVersion string `json:"latest_version"`
-	AndroidLink   string `json:"android_link"`
-	IosLink       string `json:"ios_link"`
+type QuestionRequest struct {
+	Name         string `json:"name" validate:"required"`
+	Phone        string `json:"phone" validate:"required"`
+	HospitalName string `json:"hospital_name" validate:"required"`
+	PossibleTime string `json:"possible_time" validate:"required"`
+	Email        string `json:"email" validate:"required,email"`
+	EntryRoute   string `json:"entry_route"  validate:"required"`
 }
 
 type BasicResponse struct {

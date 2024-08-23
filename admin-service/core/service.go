@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 
 	pb "admin-service/proto"
 
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
@@ -31,6 +33,7 @@ type AdminService interface {
 	findId(r FindIdRequest) (string, error)
 	sendAuthCodeForPw(r FindPwRequest) (string, error)
 	changePw(r FindPasswordRequest) (string, error)
+	question(r QuestionRequest) (string, error)
 }
 
 type adminService struct {
@@ -372,5 +375,29 @@ func (service *adminService) changePw(r FindPasswordRequest) (string, error) {
 	if err := service.db.Model(&model.User{}).Where("email = ?", r.Email).UpdateColumn("password", finalPassword).Error; err != nil {
 		return "", errors.New("db error2")
 	}
+	return "200", nil
+}
+
+func (service *adminService) question(r QuestionRequest) (string, error) {
+	// 정규 표현식 패턴: 010으로 시작하며 총 11자리 숫자
+	pattern := `^010\d{8}$`
+	matched, err := regexp.MatchString(pattern, r.Phone)
+	if err != nil || !matched {
+		return "", errors.New("invalid phone format, should be 01000000000")
+	}
+
+	// 유효성 검사기 생성
+	validate := validator.New()
+
+	//유효성 검증
+	if err := validate.Struct(r); err != nil {
+		return "", err
+	}
+
+	question := model.Question{Email: r.Email, Phone: r.Phone, Name: r.Name, PossibleTime: r.PossibleTime, EntryRoute: r.EntryRoute, HospitalName: r.HospitalName}
+	if err := service.db.Create(&question).Error; err != nil {
+		return "", errors.New("db error")
+	}
+
 	return "200", nil
 }

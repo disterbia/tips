@@ -357,3 +357,31 @@ func ChangePwHandler(endpoint endpoint.Endpoint) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(resp)
 	}
 }
+
+// @Tags 도입문의 /admin
+// @Summary 도입문의
+// @Description 도입문의시 호출
+// @Accept  json
+// @Produce  json
+// @Param request body QuestionRequest true "요청 DTO"
+// @Success 200 {object} BasicResponse "성공시 200 반환"
+// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Router /question [post]
+func QuestionHandler(endpoint endpoint.Endpoint) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req QuestionRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		response, err := endpoint(c.Context(), req)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+
+		}
+
+		resp := response.(BasicResponse)
+		return c.Status(fiber.StatusOK).JSON(resp)
+	}
+}

@@ -201,6 +201,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/question": {
+            "post": {
+                "description": "도입문의시 호출",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "도입문의 /admin"
+                ],
+                "summary": "도입문의",
+                "parameters": [
+                    {
+                        "description": "요청 DTO",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/core.QuestionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공시 200 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.BasicResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "요청 처리 실패시 오류 메시지 반환",
+                        "schema": {
+                            "$ref": "#/definitions/core.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/search-hospitals": {
             "get": {
                 "description": "병원검색시 호출",
@@ -562,6 +608,37 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "core.QuestionRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "entry_route",
+                "hospital_name",
+                "name",
+                "phone",
+                "possible_time"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "entry_route": {
+                    "type": "string"
+                },
+                "hospital_name": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "possible_time": {
                     "type": "string"
                 }
             }

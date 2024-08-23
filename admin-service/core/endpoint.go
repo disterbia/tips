@@ -113,3 +113,14 @@ func SignInEndpoint(s AdminService) endpoint.Endpoint {
 		return BasicResponse{Code: result}, nil
 	}
 }
+
+func QuestionEndpoint(s AdminService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		param := request.(QuestionRequest)
+		result, err := s.question(param)
+		if err != nil {
+			return nil, err
+		}
+		return BasicResponse{Code: result}, nil
+	}
+}

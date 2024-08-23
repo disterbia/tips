@@ -51,6 +51,28 @@ definitions:
       title:
         type: string
     type: object
+  core.QuestionRequest:
+    properties:
+      email:
+        type: string
+      entry_route:
+        type: string
+      hospital_name:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      possible_time:
+        type: string
+    required:
+    - email
+    - entry_route
+    - hospital_name
+    - name
+    - phone
+    - possible_time
+    type: object
   core.SignInRequest:
     properties:
       birthday:
@@ -207,6 +229,36 @@ paths:
       summary: 로그인
       tags:
       - 로그인 /admin
+  /question:
+    post:
+      consumes:
+      - application/json
+      description: 도입문의시 호출
+      parameters:
+      - description: 요청 DTO
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.QuestionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 도입문의
+      tags:
+      - 도입문의 /admin
   /search-hospitals:
     get:
       consumes:

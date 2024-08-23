@@ -47,6 +47,7 @@ func main() {
 	sendCodeForPwEndpoint := core.SendCodeForPwEndpoint(svc)
 	changwPwEndpoint := core.ChangePwEndpoint(svc)
 	findIdEndpoint := core.FindIdEndpoint(svc)
+	questionEndpoint := core.QuestionEndpoint(svc)
 
 	app := fiber.New()
 	app.Use(logger.New())
@@ -70,6 +71,7 @@ func main() {
 	app.Post("/verify-code", core.VerifyHandler(verifyEndpoint))
 	app.Post("/find-id", core.FindIdHandler(findIdEndpoint))
 	app.Post("/change-pw", core.ChangePwHandler(changwPwEndpoint))
+	app.Post("/question", core.QuestionHandler(questionEndpoint))
 
 	log.Fatal(app.Listen(":44400"))
 
