@@ -181,15 +181,18 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 		return nil, errors.New("db error")
 	}
 
-	// 4. 복용 기록을 날짜와 시간으로 맵핑합니다.
-	//    예: medicineTakeMap["2024-08-08"]["08:00"] = 1 (복용 기록 ID)
-	medicineTakeMap := make(map[string]map[string]uint)
+	// 4. 약물별 복용 기록을 날짜와 시간으로 맵핑합니다.
+	//    예: medicineTakeMap[2]["2024-08-08"]["08:00"] = 1 (복용 기록 ID)
+	medicineTakeMap := make(map[uint]map[string]map[string]uint)
 	for _, take := range medicineTakes {
 		dateStr := take.DateTaken.Format("2006-01-02")
-		if _, exists := medicineTakeMap[dateStr]; !exists {
-			medicineTakeMap[dateStr] = make(map[string]uint)
+		if _, exists := medicineTakeMap[take.MedicineID]; !exists {
+			medicineTakeMap[take.MedicineID] = make(map[string]map[string]uint)
 		}
-		medicineTakeMap[dateStr][take.TimeTaken] = take.ID
+		if _, exists := medicineTakeMap[take.MedicineID][dateStr]; !exists {
+			medicineTakeMap[take.MedicineID][dateStr] = make(map[string]uint)
+		}
+		medicineTakeMap[take.MedicineID][dateStr][take.TimeTaken] = take.ID
 	}
 
 	// 5. 사용자의 가입 날짜부터 오늘까지의 날짜 범위를 생성합니다.
@@ -223,15 +226,15 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 
 				// 7.2. 의약품의 각 복용 시간에 대해 복용 기록을 확인합니다.
 				for _, timeStr := range medicine.Times {
-					var takeId *uint
-					if val, exists := medicineTakeMap[dateStr][timeStr]; exists {
-						takeId = &val
+					if val, exists := medicineTakeMap[medicine.ID][dateStr][timeStr]; exists {
+						takeId := new(uint) // 새로운 메모리 공간을 할당
+						*takeId = val       // 값을 복사
+						timeTaken[timeStr] = takeId
 					} else {
-						takeId = nil
+						timeTaken[timeStr] = nil
 					}
-					timeTaken[timeStr] = takeId
-				}
 
+				}
 				// 7.3. 해당 날짜에 대한 ExpectMedicineResponse를 생성합니다.
 				response := ExpectMedicineResponse{
 					Id:        medicine.ID,

@@ -167,13 +167,16 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	}
 
 	//  예: exerciseTakeMap["2024-08-08"]["08:00"] = 1 (복용 기록 ID)
-	exerciseTakeMap := make(map[string]map[string]uint)
+	exerciseTakeMap := make(map[uint]map[string]map[string]uint)
 	for _, take := range exerciseTakes {
 		dateStr := take.DateTaken.Format("2006-01-02")
-		if _, exists := exerciseTakeMap[dateStr]; !exists {
-			exerciseTakeMap[dateStr] = make(map[string]uint)
+		if _, exists := exerciseTakeMap[take.ExerciseID]; !exists {
+			exerciseTakeMap[take.ExerciseID] = make(map[string]map[string]uint)
 		}
-		exerciseTakeMap[dateStr][take.TimeTaken] = take.ID
+		if _, exists := exerciseTakeMap[take.ExerciseID][dateStr]; !exists {
+			exerciseTakeMap[take.ExerciseID][dateStr] = make(map[string]uint)
+		}
+		exerciseTakeMap[take.ExerciseID][dateStr][take.TimeTaken] = take.ID
 	}
 
 	// 사용자의 가입 날짜부터 오늘까지의 날짜 범위를 생성합니다.
@@ -200,13 +203,13 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 				timeTaken := make(map[string]*uint)
 
 				for _, timeStr := range exercise.Times {
-					var takeId *uint
-					if val, exists := exerciseTakeMap[dateStr][timeStr]; exists {
-						takeId = &val
+					if val, exists := exerciseTakeMap[exercise.ID][dateStr][timeStr]; exists {
+						takeId := new(uint) // 새로운 메모리 공간을 할당
+						*takeId = val       // 값을 복사
+						timeTaken[timeStr] = takeId
 					} else {
-						takeId = nil
+						timeTaken[timeStr] = nil
 					}
-					timeTaken[timeStr] = takeId
 				}
 
 				response := ExpectExerciseResponse{
