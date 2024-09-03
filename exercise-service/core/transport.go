@@ -192,7 +192,7 @@ func DoExerciseHandler(endpoint endpoint.Endpoint) fiber.Handler {
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Router /undo-exercise/{id} [post]
-func UnDoHandler(endpoint endpoint.Endpoint) fiber.Handler {
+func UndoExerciseHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := verifyJWT(c)
 		if err != nil {

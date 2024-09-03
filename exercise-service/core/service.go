@@ -140,11 +140,25 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 }
 
 func (service *exerciseService) removeExercise(id uint, uid uint) (string, error) {
-	if err := service.db.Where("id =? ", id).Delete(&model.Exercise{}).Error; err != nil {
+	if err := service.db.Where("id =? AND uid =?", id, uid).Delete(&model.Exercise{}).Error; err != nil {
 		return "", errors.New("db error")
 	}
 
-	// nats removeNotifications
+	notificationRequest := NotificationRequest{
+		Uid:      uid,
+		Type:     uint(EXERCISENOTIFIATION),
+		ParentID: id,
+	}
+
+	eventData, err := json.Marshal(notificationRequest)
+	if err != nil {
+		return "", errors.New("json marshal error")
+	}
+
+	if err := service.nats.Publish("remove-exercise", eventData); err != nil {
+		return "", errors.New("nats publish error")
+	}
+
 	return "200", nil
 }
 

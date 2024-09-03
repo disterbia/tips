@@ -152,10 +152,22 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 }
 
 func (service *medicineService) removeMedicine(id uint, uid uint) (string, error) {
-	if err := service.db.Where("id =? ", id).Delete(&model.Medicine{}).Error; err != nil {
+	if err := service.db.Where("id =? AND uid = ?", id, uid).Delete(&model.Medicine{}).Error; err != nil {
 		return "", errors.New("db error")
 	}
+	notificationRequest := NotificationRequest{
+		Uid:      uid,
+		Type:     uint(MEDICINENOTIFICATION),
+		ParentID: id,
+	}
+	eventData, err := json.Marshal(notificationRequest)
+	if err != nil {
+		return "", errors.New("json marshal error")
+	}
 
+	if err := service.nats.Publish("remove-medicine", eventData); err != nil {
+		return "", errors.New("nats publish error")
+	}
 	// nats removeNotifications
 	return "200", nil
 }

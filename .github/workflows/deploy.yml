@@ -25,4 +25,5 @@ jobs:
             docker-compose -p tips -f docker-compose-tips.yml pull
             docker-compose -p tips -f docker-compose-tips.yml up -d --remove-orphans
             docker image prune -a -f
+            docker container prune -f
           debug: true

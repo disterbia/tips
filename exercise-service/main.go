@@ -44,6 +44,7 @@ func main() {
 	getExpectsEndpoint := core.GetExpectsEndpoint(svc)
 	removeExercisesEndpoint := core.RemoveExerciseEndpoint(svc)
 	doExerciseEndpoint := core.DoExerciseEndpoint(svc)
+	undoExerciseEndpoint := core.UndoExerciseEndpoint(svc)
 	getExercisesEndpoint := core.GetExercisesEndpoint(svc)
 	// getProjectsEndpoint := core.GetProjectsEndpoint(svc)
 	// getVideosEndpoint := core.GetVideosEndpoint(svc)
@@ -61,8 +62,9 @@ func main() {
 	app.Use(cors.New())
 
 	app.Post("/save-exercise", core.SaveExerciseHandler(saveExerciseEndpoint))
-	app.Post("/remove-exercises", core.RemoveExercisesHandler(removeExercisesEndpoint))
+	app.Post("/remove-exercise/:id", core.RemoveExercisesHandler(removeExercisesEndpoint))
 	app.Post("/do-exercise", core.DoExerciseHandler(doExerciseEndpoint))
+	app.Post("/undo-exercise/:id", core.UndoExerciseHandler(undoExerciseEndpoint))
 	app.Get("/get-takens", core.GetExpectsHandler(getExpectsEndpoint))
 	app.Get("/get-exercises", core.GetExercisesHandler(getExercisesEndpoint))
 	// app.Get("/get-projects", core.GetProjectsHandler(getProjectsEndpoint))

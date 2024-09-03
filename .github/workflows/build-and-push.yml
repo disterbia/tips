@@ -10,11 +10,34 @@ permissions:
   actions: write
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed-services: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            gateway: 'gateway/**'
+            inquire-service: 'inquire-service/**'
+            email-service: 'email-service/**'
+            user-service: 'user-service/**'
+            medicine-service: 'medicine-service/**'
+            notification-service: 'notification-service/**'
+            fcm-service: 'fcm-service/**'
+            emotion-service: 'emotion-service/**'
+            exercise-service: 'exercise-service/**'
+            video-service: 'video-service/**'
+            admin-service: 'admin-service/**'
+
   build-and-push:
+    needs: detect-changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [gateway,inquire-service,email-service,user-service,medicine-service,notification-service,fcm-service,emotion-service,exercise-service,video-service,admin-service]
+        service: ${{ fromJson(needs.detect-changes.outputs.changed-services) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

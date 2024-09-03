@@ -63,6 +63,19 @@ func DoExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
 	}
 }
 
+func UndoExerciseEndpoint(s ExerciseService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		reqMap := request.(map[string]interface{})
+		id := reqMap["id"].(uint)
+		uid := reqMap["uid"].(uint)
+		code, err := s.undoExercise(id, uid)
+		if err != nil {
+			return BasicResponse{Code: err.Error()}, err
+		}
+		return BasicResponse{Code: code}, nil
+	}
+}
+
 // func GetProjectsEndpoint(s ExerciseService) endpoint.Endpoint {
 // 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 // 		projects, err := s.getProjects()
