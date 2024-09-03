@@ -183,7 +183,7 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	startDate := user.CreatedAt
 	endDate := time.Now()
 	// 날짜별 응답을 저장할 맵
-	responseMap := make(map[string]*ExerciseTakeResponse)
+	responseMap := make(map[string]ExerciseTakeResponse)
 
 	for _, exercise := range exercises {
 		exerStart := exercise.StartAt
@@ -219,20 +219,25 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 				}
 
 				if _, exists := responseMap[dateStr]; !exists {
-					responseMap[dateStr] = &ExerciseTakeResponse{
+					responseMap[dateStr] = ExerciseTakeResponse{
 						DateTaken:     dateStr,
 						ExerciseTaken: []ExpectExerciseResponse{},
 					}
 				}
 
-				responseMap[dateStr].ExerciseTaken = append(responseMap[dateStr].ExerciseTaken, response)
+				// 맵에서 값을 가져와 변수에 저장
+				tempResponse := responseMap[dateStr]
+				// 변수의 필드를 수정
+				tempResponse.ExerciseTaken = append(tempResponse.ExerciseTaken, response)
+				// 수정된 변수를 다시 맵에 저장
+				responseMap[dateStr] = tempResponse
 			}
 		}
 	}
 
 	// 맵을 리스트로 변환
 	for _, response := range responseMap {
-		responses = append(responses, *response)
+		responses = append(responses, response)
 	}
 
 	for _, take := range exerciseTakes {
@@ -245,7 +250,9 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 			if res.DateTaken == dateStr {
 				for j, exerRes := range res.ExerciseTaken {
 					if exerRes.Id == take.ExerciseID {
-						responses[i].ExerciseTaken[j].TimeTaken[timeStr] = &take.ID
+						takeId := new(uint) // 새로운 메모리 공간을 할당
+						*takeId = take.ID   // 값을 복사
+						responses[i].ExerciseTaken[j].TimeTaken[timeStr] = takeId
 						found = true
 						break
 					}
@@ -258,8 +265,10 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 
 		// 8.2. 해당 날짜와 시간에 대한 기록이 없으면 새로 추가합니다.
 		if !found {
+			takeId := new(uint)
+			*takeId = take.ID
 			timeTaken := map[string]*uint{
-				timeStr: &take.ID,
+				timeStr: takeId, // 새로운 메모리 공간을 사용
 			}
 			response := ExpectExerciseResponse{
 				Id:        take.ExerciseID,

@@ -199,7 +199,7 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 	startDate := user.CreatedAt
 	endDate := time.Now()
 	// 날짜별 응답을 저장할 맵
-	responseMap := make(map[string]*MedicineTakeResponse)
+	responseMap := make(map[string]MedicineTakeResponse)
 	// 6. 각 의약품에 대해 복용 스케줄을 생성합니다.
 	for _, medicine := range medicines {
 		medStart := medicine.StartAt
@@ -245,21 +245,27 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 
 				// 7. 해당 날짜의 응답을 맵에서 가져오거나 새로 만듭니다.
 				if _, exists := responseMap[dateStr]; !exists {
-					responseMap[dateStr] = &MedicineTakeResponse{
+					responseMap[dateStr] = MedicineTakeResponse{
 						DateTaken:     dateStr,
 						MedicineTaken: []ExpectMedicineResponse{},
 					}
 				}
 
 				// 8. 해당 날짜의 응답에 추가합니다.
-				responseMap[dateStr].MedicineTaken = append(responseMap[dateStr].MedicineTaken, response)
+				// 맵에서 값을 가져와 변수에 저장
+				tempResponse := responseMap[dateStr]
+				// 변수의 필드를 수정
+				tempResponse.MedicineTaken = append(tempResponse.MedicineTaken, response)
+				// 수정된 변수를 다시 맵에 저장
+				responseMap[dateStr] = tempResponse
+
 			}
 		}
 	}
 
 	// 맵을 리스트로 변환
 	for _, response := range responseMap {
-		responses = append(responses, *response)
+		responses = append(responses, response)
 	}
 	// 8. 모든 복용 기록을 처리하여 응답에 포함합니다.
 	for _, take := range medicineTakes {
@@ -273,9 +279,12 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 			if res.DateTaken == dateStr { // 2. 응답의 날짜가 현재 복용 기록의 날짜와 같은지 확인합니다.
 				for j, medRes := range res.MedicineTaken { // 3. 해당 날짜의 MedicineTaken 리스트를 순회합니다.
 					if medRes.Id == take.MedicineID { // 4. 해당 MedicineTaken의 ID가 현재 복용 기록의 MedicineID와 같은지 확인합니다.
-						responses[i].MedicineTaken[j].TimeTaken[timeStr] = &take.ID // 5. 같은 약물 기록이 있으면, 해당 시간의 복용 기록 ID를 업데이트합니다.
-						found = true                                                // 6. 업데이트가 완료되었음을 표시합니다.
-						break                                                       // 7. 내부 루프를 탈출합니다.
+						takeId := new(uint)                                       // 새로운 메모리 공간을 할당
+						*takeId = take.ID                                         // 값을 복사
+						responses[i].MedicineTaken[j].TimeTaken[timeStr] = takeId // 5. 같은 약물 기록이 있으면, 해당 시간의 복용 기록 ID를 업데이트합니다.
+
+						found = true // 6. 업데이트가 완료되었음을 표시합니다.
+						break        // 7. 내부 루프를 탈출합니다.
 					}
 				}
 			}
@@ -286,8 +295,10 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 
 		// 8.2. 해당 날짜와 시간에 대한 기록이 없으면 새로 추가합니다.
 		if !found {
+			takeId := new(uint)
+			*takeId = take.ID
 			timeTaken := map[string]*uint{
-				timeStr: &take.ID,
+				timeStr: takeId, // 새로운 메모리 공간을 사용
 			}
 			response := ExpectMedicineResponse{
 				Id:        take.MedicineID,
