@@ -227,7 +227,7 @@ func (service *adminService) signIn(r SignInRequest) (string, error) {
 		RoleID: uint(ADMINROLE), IsApproval: &falseValue}
 
 	if err := service.db.Create(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
+		if strings.Contains(err.Error(), "duplicate") {
 			return "", errors.New("-3")
 		}
 		return "", errors.New("db error2")

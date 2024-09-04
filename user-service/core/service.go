@@ -111,7 +111,7 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 					user = model.User{Name: request.Name, Email: &email, SnsType: snsType, DeviceID: request.DeviceID, FCMToken: request.FCMToken, Phone: request.Phone, Gender: request.Gender,
 						Birthday: birthday, UserType: request.UserType}
 					if err := service.db.Create(&user).Error; err != nil {
-						if errors.Is(err, gorm.ErrDuplicatedKey) {
+						if strings.Contains(err.Error(), "duplicate") {
 							if err := service.db.Where("phone = ? ", request.Phone).First(&user).Error; err != nil {
 								return "", errors.New("db error2")
 							}
