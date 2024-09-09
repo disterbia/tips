@@ -194,8 +194,8 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	}
 
 	// 사용자의 가입 날짜부터 오늘까지의 날짜 범위를 생성합니다.
-	startDate := user.CreatedAt
-	endDate := time.Now()
+	startDate := user.CreatedAt.Truncate(24 * time.Hour)
+	endDate := time.Now().Truncate(24 * time.Hour)
 	// 날짜별 응답을 저장할 맵
 	responseMap := make(map[string]ExerciseTakeResponse)
 
@@ -209,7 +209,7 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 		if exerEnd == nil || exerEnd.After(endDate) {
 			exerEnd = &endDate
 		}
-		for d := *exerStart; !d.After(*exerEnd); d = d.AddDate(0, 0, 1) {
+		for d := *exerStart; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 0, 1) {
 			weekDay := int(d.Weekday())
 
 			if contains(exercise.Weekdays, int64(weekDay)) {

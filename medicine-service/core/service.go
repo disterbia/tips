@@ -208,8 +208,8 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 	}
 
 	// 5. 사용자의 가입 날짜부터 오늘까지의 날짜 범위를 생성합니다.
-	startDate := user.CreatedAt
-	endDate := time.Now()
+	startDate := user.CreatedAt.Truncate(24 * time.Hour)
+	endDate := time.Now().Truncate(24 * time.Hour)
 	// 날짜별 응답을 저장할 맵
 	responseMap := make(map[string]MedicineTakeResponse)
 	// 6. 각 의약품에 대해 복용 스케줄을 생성합니다.
@@ -228,7 +228,7 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 		}
 
 		// 7. 의약품의 복용 기간 동안 반복합니다.
-		for d := *medStart; !d.After(*medEnd); d = d.AddDate(0, 0, 1) {
+		for d := *medStart; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 0, 1) {
 			weekDay := int(d.Weekday())
 
 			// 7.1. 해당 날짜의 요일이 의약품의 복용 요일에 포함되는지 확인합니다.
