@@ -48,7 +48,7 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 	}
 
 	for _, v := range r.Weekdays {
-		if v == 0 || v > 7 {
+		if v > 6 {
 			return "", errors.New("validate weekdays")
 		}
 		weekdays = append(weekdays, v)

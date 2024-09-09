@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"medicine-service/model"
 	"sort"
 	"strings"
@@ -49,7 +50,7 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 	}
 
 	for _, v := range r.Weekdays {
-		if v == 0 || v > 7 {
+		if v > 6 {
 			return "", errors.New("validate weekdays")
 		}
 		weekdays = append(weekdays, v)
@@ -230,10 +231,11 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 		// 7. 의약품의 복용 기간 동안 반복합니다.
 		for d := *medStart; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 0, 1) {
 			weekDay := int(d.Weekday())
-
+			log.Println(weekDay)
 			// 7.1. 해당 날짜의 요일이 의약품의 복용 요일에 포함되는지 확인합니다.
 			if contains(medicine.Weekdays, int64(weekDay)) {
 				dateStr := d.Format("2006-01-02")
+
 				timeTaken := make(map[string]*uint)
 
 				// 7.2. 의약품의 각 복용 시간에 대해 복용 기록을 확인합니다.
