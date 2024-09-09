@@ -176,7 +176,7 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	}
 
 	var exerciseTakes []model.ExerciseTake
-	if err := service.db.Where("uid = ?", uid).Find(&exerciseTakes).Error; err != nil {
+	if err := service.db.Where("uid = ?", uid).Preload("Exercise").Find(&exerciseTakes).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
@@ -260,29 +260,40 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 
 		var found bool
 
+		// 8.1. 이미 응답에 해당 날짜의 기록이 있는지 확인합니다.
 		for i, res := range responses {
 			if res.DateTaken == dateStr {
-				for j, exerRes := range res.ExerciseTaken {
-					if exerRes.Id == take.ExerciseID {
-						takeId := new(uint) // 새로운 메모리 공간을 할당
-						*takeId = take.ID   // 값을 복사
+				found = true
+				var exerciseFound bool
+				for j, medRes := range res.ExerciseTaken {
+					if medRes.Id == take.ExerciseID {
+						takeId := new(uint)
+						*takeId = take.ID
 						responses[i].ExerciseTaken[j].TimeTaken[timeStr] = takeId
-						found = true
+						exerciseFound = true
 						break
 					}
 				}
-			}
-			if found {
-				break //
+				if !exerciseFound {
+					takeId := new(uint)
+					*takeId = take.ID
+					newExercise := ExpectExerciseResponse{
+						Id:        take.ExerciseID,
+						Name:      take.Exercise.Name,
+						TimeTaken: map[string]*uint{timeStr: takeId},
+					}
+					responses[i].ExerciseTaken = append(responses[i].ExerciseTaken, newExercise)
+				}
+				break
 			}
 		}
 
-		// 8.2. 해당 날짜와 시간에 대한 기록이 없으면 새로 추가합니다.
+		// 8.2. 해당 날짜에 대한 기록이 없으면 새로 추가합니다.
 		if !found {
 			takeId := new(uint)
 			*takeId = take.ID
 			timeTaken := map[string]*uint{
-				timeStr: takeId, // 새로운 메모리 공간을 사용
+				timeStr: takeId,
 			}
 			response := ExpectExerciseResponse{
 				Id:        take.ExerciseID,

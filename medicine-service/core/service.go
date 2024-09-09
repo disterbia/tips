@@ -189,7 +189,7 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 
 	// 3. 사용자의 의약품 복용 기록을 데이터베이스에서 가져옵니다.
 	var medicineTakes []model.MedicineTake
-	if err := service.db.Where("uid = ?", uid).Find(&medicineTakes).Error; err != nil {
+	if err := service.db.Where("uid = ?", uid).Preload("Medicine").Find(&medicineTakes).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
@@ -287,30 +287,40 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 		var found bool
 
 		// 8.1. 이미 응답에 해당 날짜의 기록이 있는지 확인합니다.
-		for i, res := range responses { // 1. responses 리스트에서 각 응답(res)을 순회합니다.
-			if res.DateTaken == dateStr { // 2. 응답의 날짜가 현재 복용 기록의 날짜와 같은지 확인합니다.
-				for j, medRes := range res.MedicineTaken { // 3. 해당 날짜의 MedicineTaken 리스트를 순회합니다.
-					if medRes.Id == take.MedicineID { // 4. 해당 MedicineTaken의 ID가 현재 복용 기록의 MedicineID와 같은지 확인합니다.
-						takeId := new(uint)                                       // 새로운 메모리 공간을 할당
-						*takeId = take.ID                                         // 값을 복사
-						responses[i].MedicineTaken[j].TimeTaken[timeStr] = takeId // 5. 같은 약물 기록이 있으면, 해당 시간의 복용 기록 ID를 업데이트합니다.
-
-						found = true // 6. 업데이트가 완료되었음을 표시합니다.
-						break        // 7. 내부 루프를 탈출합니다.
+		for i, res := range responses {
+			if res.DateTaken == dateStr {
+				found = true
+				var medicineFound bool
+				for j, medRes := range res.MedicineTaken {
+					if medRes.Id == take.MedicineID {
+						takeId := new(uint)
+						*takeId = take.ID
+						responses[i].MedicineTaken[j].TimeTaken[timeStr] = takeId
+						medicineFound = true
+						break
 					}
 				}
-			}
-			if found {
-				break // 8. 외부 루프를 탈출합니다.
+				if !medicineFound {
+					takeId := new(uint)
+					*takeId = take.ID
+					newMedicine := ExpectMedicineResponse{
+						Id:        take.MedicineID,
+						Name:      take.Medicine.Name,
+						TimeTaken: map[string]*uint{timeStr: takeId},
+						Dose:      take.Dose,
+					}
+					responses[i].MedicineTaken = append(responses[i].MedicineTaken, newMedicine)
+				}
+				break
 			}
 		}
 
-		// 8.2. 해당 날짜와 시간에 대한 기록이 없으면 새로 추가합니다.
+		// 8.2. 해당 날짜에 대한 기록이 없으면 새로 추가합니다.
 		if !found {
 			takeId := new(uint)
 			*takeId = take.ID
 			timeTaken := map[string]*uint{
-				timeStr: takeId, // 새로운 메모리 공간을 사용
+				timeStr: takeId,
 			}
 			response := ExpectMedicineResponse{
 				Id:        take.MedicineID,
@@ -423,7 +433,7 @@ func (service *medicineService) unTakeMedicine(id, uid uint) (string, error) {
 	}
 	tx := service.db.Begin()
 
-	result := tx.Where("id = ?").Unscoped().Delete(&model.MedicineTake{})
+	result := tx.Where("id = ? AND uid = ?", id, uid).Unscoped().Delete(&model.MedicineTake{})
 	if result.Error != nil {
 		tx.Rollback()
 		return "", errors.New("db error")
