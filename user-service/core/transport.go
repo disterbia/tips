@@ -235,7 +235,7 @@ func VerifyHandler(verifyEndpoint endpoint.Endpoint) fiber.Handler {
 // @Accept  json
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Param request body UserRequest true "요청 DTO - 업데이트 할 데이터/ ture:남성 user_Type- 0:해당없음 1:파킨슨 환자 2:보호자"
+// @Param request body UserRequest true "요청 DTO - 업데이트 할 데이터/ ture:남성 user_type: 0:해당없음, 1~6:파킨슨 환자, 10:보호자 "
 // @Success 200 {object} BasicResponse "성공시 200 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환: 오류메시지 "-1" = 번호인증 필요"
@@ -272,7 +272,7 @@ func UpdateUserHandler(endpoint endpoint.Endpoint) fiber.Handler {
 // @Accept  json
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Success 200 {object} UserResponse "성공시 유저 객체 반환/ ture:남성 user_Type- 0:해당없음 1:파킨슨 환자 2:보호자 sns_type- 0:휴대폰,1:카카오 2:구글 3:애플"
+// @Success 200 {object} UserResponse "성공시 유저 객체 반환/ ture:남성 user_type: 0:해당없음, 1~6:파킨슨 환자, 10:보호자  sns_type- 0:휴대폰,1:카카오 2:구글 3:애플"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Router /get-user [get]

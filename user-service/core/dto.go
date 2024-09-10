@@ -56,6 +56,7 @@ type UserResponse struct {
 	CreatedAt    string           `json:"created_at"`
 	ProfileImage ImageResponse    `json:"profile_image"`
 	LinkedEmails []LinkedResponse `json:"linked_emails"`
+	UserType     uint             `json:"user_type"`
 }
 
 type ImageResponse struct {

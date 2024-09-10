@@ -619,6 +619,7 @@ func (service *userService) GetUser(id uint) (UserResponse, error) {
 	userResponse.SnsType = user.SnsType
 	userResponse.LinkedEmails = linkedEmails
 	userResponse.CreatedAt = user.CreatedAt.Format("2006-01-02")
+	userResponse.UserType = user.UserType
 
 	return userResponse, nil
 }
