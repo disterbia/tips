@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Tags 알람 /alarm
+// @Tags 알람 /notification
 // @Summary 수신 알림 조회
 // @Description 수신 알림 조회시 호출
 // @Produce  json
@@ -31,7 +31,7 @@ func GetMessagesHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	}
 }
 
-// @Tags 알람 /alarm
+// @Tags 알람 /notification
 // @Summary  알림 모두 읽기
 // @Description 수신 알림 조회시 자동 읽음 처리라면 수신 알림 조회완료 후 함께 호출
 // @Accept  json
@@ -58,7 +58,7 @@ func ReadAllHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	}
 }
 
-// @Tags 알람 /alarm
+// @Tags 알람 /notification
 // @Summary 수신된 알림 삭제
 // @Description 수신된 알림 삭제시 호출
 // @Accept  json

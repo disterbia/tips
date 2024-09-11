@@ -323,7 +323,7 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 		birtday = birth
 	}
 
-	if err := validatePhoneNumber(request.Phone); err != nil {
+	if err := validateSignInForUpdate(request); err != nil {
 		return "", err
 	}
 

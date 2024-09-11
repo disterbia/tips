@@ -168,6 +168,18 @@ func validateSignIn(request LoginRequest) error {
 	return nil
 }
 
+func validateSignInForUpdate(request UserRequest) error {
+	err := validatePhoneNumber(request.Phone)
+	if err != nil {
+		return err
+	}
+	name := strings.TrimSpace(request.Name)
+	if utf8.RuneCountInString(name) > 5 || len(name) == 0 {
+		return errors.New("invalid name")
+	}
+	return nil
+}
+
 func validatePhoneSignIn(request PhoneLoginRequest) error {
 	err := validatePhoneNumber(request.Phone)
 	if err != nil {
