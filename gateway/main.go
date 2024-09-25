@@ -3,7 +3,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -82,6 +81,7 @@ func main() {
 	setupProxy(app, "/notification/*", "http://notification:44408")
 	setupProxy(app, "/user/*", "http://user:44409")
 	setupProxy(app, "/video/*", "http://video:44410")
+	setupProxy(app, "/check/*", "http://check:44411")
 
 	// Swagger UI 프록시 설정
 	setupSwaggerUIProxy(app, "/admin-service/swagger/*", "http://admin:44400/swagger")
@@ -92,6 +92,7 @@ func main() {
 	setupSwaggerUIProxy(app, "/notification-service/swagger/*", "http://notification:44408/swagger")
 	setupSwaggerUIProxy(app, "/user-service/swagger/*", "http://user:44409/swagger")
 	setupSwaggerUIProxy(app, "/video-service/swagger/*", "http://video:44410/swagger")
+	setupSwaggerUIProxy(app, "/check-service/swagger/*", "http://check:44411/swagger")
 
 	// Swagger JSON 파일 리다이렉트
 	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
@@ -118,6 +119,8 @@ func main() {
 
 		} else if strings.Contains(referer, "/admin-service/") {
 			return c.Redirect("/admin-service/swagger/doc.json")
+		} else if strings.Contains(referer, "/check-service/") {
+			return c.Redirect("/check-service/swagger/doc.json")
 		}
 		return c.SendStatus(fiber.StatusNotFound)
 	})
@@ -134,7 +137,6 @@ func setupProxy(app *fiber.App, path string, target string) {
 		if len(originalQuery) > 0 {
 			targetURL += "?" + string(originalQuery)
 		}
-		log.Printf("Proxying request to: %s\n", targetURL)
 		return proxy.Do(c, targetURL)
 	})
 }

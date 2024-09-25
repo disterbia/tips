@@ -55,7 +55,7 @@ func main() {
 	app.Post("/save-face-score", core.SaveFaceScoreHandler(saveFaceScoreEndpoint))
 	app.Post("/save-score", core.SaveScoreHandler(saveScoreEndpoint))
 
-	log.Fatal(app.Listen(":44404"))
+	log.Fatal(app.Listen(":44411"))
 	// router.RunTLS(":8080", "cert.pem", "key.pem")
 
 }
