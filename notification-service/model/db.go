@@ -22,8 +22,7 @@ func NewDB(dataSourceName string) (*gorm.DB, error) {
 	}
 
 	// lock_timeout 설정
-	err = db.Exec("SET lock_timeout = '1s'").Error
-	if err != nil {
+	if err = db.Exec("SET lock_timeout = '1s'").Error; err != nil {
 		return nil, err
 	}
 
