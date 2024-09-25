@@ -14,7 +14,7 @@ type CheckService interface {
 	getSampleVideos() ([]SampleVideoResponse, error)
 	getFaceScores(id uint, param GetFaceScoreParams) ([]FaceScoreResponse, error)
 	getTapBlinkScores(id uint, param GetTapBlinkScoreParams) ([]TapBlinkResponse, error)
-	saveFaceScores(request FaceScoreRequest) (string, error)
+	saveFaceScores(uid uint, request []FaceScoreRequest) (string, error)
 	saveTapBlinkScore(request TapBlinkRequest) (string, error)
 }
 
@@ -69,13 +69,23 @@ func (service *checkService) getFaceScores(id uint, param GetFaceScoreParams) ([
 		return nil, errors.New("db error")
 	}
 
+	// 날짜별로 그룹화된 응답을 위한 맵 구조 선언
+	faceScoreMap := make(map[string][]FaceScoreResponse)
+
+	// 날짜별로 FaceScores 그룹화
 	for _, v := range faceScores {
-		faceScoreResponses = append(faceScoreResponses, FaceScoreResponse{
-			TargetDate: v.CreatedAt.Format("2006-01-02"),
-			FaceType:   v.FaceType,
-			FaceLine:   v.FaceLine,
-			Sd:         v.Sd,
-		})
+		// 날짜를 'YYYY-MM-DD' 형식으로 포맷
+		targetDate := v.CreatedAt.Format("2006-01-02")
+
+		// FaceScoreResponse로 변환
+		faceScoreResponse := FaceScoreResponse{
+			FaceType: v.FaceType,
+			FaceLine: v.FaceLine,
+			Sd:       v.Sd,
+		}
+
+		// 날짜에 해당하는 그룹에 추가
+		faceScoreMap[targetDate] = append(faceScoreMap[targetDate], faceScoreResponse)
 	}
 	return faceScoreResponses, nil
 }
@@ -116,7 +126,7 @@ func (service *checkService) getTapBlinkScores(id uint, param GetTapBlinkScorePa
 	return tapBlinkResponses, nil
 }
 
-func (service *checkService) saveFaceScores(request FaceScoreRequest) (string, error) {
+func (service *checkService) saveFaceScores(uid uint, request []FaceScoreRequest) (string, error) {
 	// 유효성 검사기 생성
 	validate := validator.New()
 
@@ -136,18 +146,22 @@ func (service *checkService) saveFaceScores(request FaceScoreRequest) (string, e
 		}
 	}()
 
-	if err := tx.Where("created_at::date = ? AND uid = ? ", targetDate, request.Uid).Delete(&model.FaceScore{}).Error; err != nil {
+	if err := tx.Where("created_at::date = ? AND uid = ? ", targetDate, uid).Delete(&model.FaceScore{}).Error; err != nil {
 		tx.Rollback()
 		return "", errors.New("db error")
 	}
 
-	var faceScore model.FaceScore
-	faceScore.Uid = request.Uid
-	faceScore.FaceLine = request.FaceLine
-	faceScore.FaceType = request.FaceType
-	faceScore.Sd = request.Sd
+	var faceScores []model.FaceScore
+	for _, v := range request {
+		faceScores = append(faceScores, model.FaceScore{
+			Uid:      uid,
+			FaceType: v.FaceType,
+			FaceLine: v.FaceLine,
+			Sd:       v.Sd,
+		})
+	}
 
-	if err := tx.Create(&faceScore).Error; err != nil {
+	if err := tx.Create(&faceScores).Error; err != nil {
 		tx.Rollback()
 		return "", errors.New("db error2")
 	}

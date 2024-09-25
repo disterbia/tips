@@ -55,8 +55,10 @@ func SaveTapBlinkScoreEndpoint(s CheckService) endpoint.Endpoint {
 
 func SaveFaceScoreEndpoint(s CheckService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		score := request.(FaceScoreRequest)
-		code, err := s.saveFaceScores(score)
+		reqMap := request.(map[string]interface{})
+		id := reqMap["id"].(uint)
+		score := reqMap["queryParams"].([]FaceScoreRequest)
+		code, err := s.saveFaceScores(id, score)
 		if err != nil {
 			return nil, err
 		}

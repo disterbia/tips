@@ -34,7 +34,6 @@ type TapBlinkResponse struct {
 }
 
 type FaceScoreRequest struct {
-	Uid      uint    `json:"-"`
 	FaceType uint    `json:"face_type" validate:"required,min=5,max=8"`
 	FaceLine uint    `json:"face_line" validate:"required,min=5,max=8"`
 	Sd       float64 `json:"sd" validate:"required,min=1,max=100"`

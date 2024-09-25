@@ -122,7 +122,7 @@ func GetScoresHandler(endpoint endpoint.Endpoint) fiber.Handler {
 // @Description 표정검사 완료 후 호출
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Param request body FaceScoreRequest true "요청 DTO - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노"
+// @Param request body []FaceScoreRequest true "요청 DTO - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노"
 // @Success 200 {object} BasicResponse "성공시 200 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
@@ -140,13 +140,15 @@ func SaveFaceScoreHandler(endpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "Concurrent request detected"})
 		}
 		defer userLocks.Delete(id)
-		var req FaceScoreRequest
+		var req []FaceScoreRequest
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		req.Uid = id
-		response, err := endpoint(c.Context(), req)
+		response, err := endpoint(c.Context(), map[string]interface{}{
+			"id":          id,
+			"queryParams": req,
+		})
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
