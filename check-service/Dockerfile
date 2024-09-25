@@ -1,5 +1,5 @@
 # 기본 이미지로 Go 최신 버전을 사용
-FROM golang:1.21.5 AS builder
+FROM golang:1.22-alpine AS builder
 
 # 작업 디렉토리 설정
 WORKDIR /tips
