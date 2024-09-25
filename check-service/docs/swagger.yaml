@@ -1,0 +1,274 @@
+definitions:
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
+  core.ErrorResponse:
+    properties:
+      err:
+        type: string
+    type: object
+  core.FaceScoreRequest:
+    properties:
+      face_line:
+        maximum: 8
+        minimum: 5
+        type: integer
+      face_type:
+        maximum: 8
+        minimum: 5
+        type: integer
+      sd:
+        maximum: 100
+        minimum: 1
+        type: number
+    required:
+    - face_line
+    - face_type
+    - sd
+    type: object
+  core.FaceScoreResponse:
+    properties:
+      date:
+        example: YYYY-mm-dd
+        type: string
+      face_line:
+        type: integer
+      face_type:
+        type: integer
+      sd:
+        type: number
+    type: object
+  core.SampleVideoResponse:
+    properties:
+      category:
+        type: integer
+      title:
+        type: string
+      video_id:
+        type: string
+      video_type:
+        type: integer
+    type: object
+  core.TapBlinkRequest:
+    properties:
+      error_count:
+        maximum: 100
+        minimum: 1
+        type: integer
+      reaction_speed:
+        maximum: 100
+        minimum: 1
+        type: number
+      score_type:
+        maximum: 2
+        minimum: 1
+        type: integer
+      success_count:
+        maximum: 100
+        minimum: 1
+        type: integer
+    required:
+    - error_count
+    - reaction_speed
+    - score_type
+    - success_count
+    type: object
+  core.TapBlinkResponse:
+    properties:
+      date:
+        example: YYYY-mm-dd
+        type: string
+      error_count:
+        type: integer
+      reaction_speed:
+        type: number
+      score_type:
+        type: integer
+      success_count:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /get-face-scores:
+    get:
+      description: 표정검사 점수 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 시작날짜 yyyy-mm-dd
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: 종료날짜 yyyy-mm-dd
+        in: query
+        name: end_date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '점수정보 - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노'
+          schema:
+            items:
+              $ref: '#/definitions/core.FaceScoreResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 표정검사 점수 조회
+      tags:
+      - 검사 /check
+  /get-scores:
+    get:
+      description: 손가락태핑/눈깜빡임 점수 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 1-손가락태핑 2-눈깜빡임
+        in: query
+        name: score_type
+        required: true
+        type: integer
+      - description: 시작날짜 yyyy-mm-dd
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: 종료날짜 yyyy-mm-dd
+        in: query
+        name: end_date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 점수정보
+          schema:
+            items:
+              $ref: '#/definitions/core.TapBlinkResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 손가락태핑/눈깜빡임 점수 조회
+      tags:
+      - 검사 /check
+  /get-videos:
+    get:
+      description: 샘플동영상 조회시 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '동영상 정보 - category: 1-표정 2-손가락태핑 3-눈깜빡임 / video_type: 1-태핑,눈깜빡임,기쁨
+            2-슬픔 3-놀람 4-분노'
+          schema:
+            items:
+              $ref: '#/definitions/core.SampleVideoResponse'
+            type: array
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 샘플동영상 전체 조회
+      tags:
+      - 검사 /check
+  /save-face-score:
+    post:
+      description: 표정검사 완료 후 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: '요청 DTO - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.FaceScoreRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 표정검사 점수 저장
+      tags:
+      - 검사 /check
+  /save-score:
+    post:
+      description: 손가락태핑/눈깜빡임 검사 완료 후 호출
+      parameters:
+      - description: Bearer {jwt_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: '요청 DTO - score_type: 1-손가락태핑 2-눈깜빡임'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.TapBlinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: 손가락태핑/눈깜빡임 검사 점수 저장
+      tags:
+      - 검사 /check
+swagger: "2.0"

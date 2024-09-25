@@ -6,5 +6,5 @@ import (
 
 type VerifiedTarget struct {
 	gorm.Model
-	Phone string
+	Target string
 }

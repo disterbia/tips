@@ -58,9 +58,11 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 	if request.FCMToken == "" || request.DeviceID == "" {
 		return "", errors.New("check fcm_token,device_id")
 	}
-	iss := decodeJwt(request.IdToken)
+	iss, err := decodeJwt(request.IdToken)
+	if err != nil {
+		return "", err
+	}
 
-	var err error
 	var email string
 	var snsType uint
 
@@ -304,7 +306,7 @@ func (service *userService) verifyAuthCode(number, code string) (string, error) 
 		return "", errors.New("db error3")
 	}
 
-	if err := tx.Create(&model.VerifiedTarget{Phone: authCode.Phone}).Error; err != nil {
+	if err := tx.Create(&model.VerifiedTarget{Target: authCode.Phone}).Error; err != nil {
 		tx.Rollback()
 		return "", errors.New("db error2")
 	}
@@ -485,7 +487,11 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 }
 
 func (service *userService) LinkEmail(uid uint, idToken string) (string, error) {
-	iss := decodeJwt(idToken)
+	iss, err := decodeJwt(idToken)
+
+	if err != nil {
+		return "", err
+	}
 
 	if strings.Contains(iss, "kakao") { //카카오
 		jwks, err := getKakaoPublicKeys()

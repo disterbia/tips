@@ -69,7 +69,7 @@ func (service *notificationService) RemoveNotifications(r NotificationRequest) (
 
 func (service *notificationService) GetMessages(uid uint) ([]MessageResponse, error) {
 	var messages []model.Message
-	result := service.db.Where("uid = ? ", uid).Find(&messages)
+	result := service.db.Where("uid = ? ", uid).Order("id DESC").Find(&messages)
 	if result.Error != nil {
 		return nil, result.Error
 	}

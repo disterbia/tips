@@ -75,10 +75,11 @@ func generateJWT(user model.User) (string, error) {
 	return tokenString, nil
 }
 
-func decodeJwt(tokenString string) string {
+func decodeJwt(tokenString string) (string, error) {
 	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
 	if err != nil {
 		log.Println(err)
+		return "", err
 	}
 
 	// MapClaims 타입으로 claims 확인
@@ -86,14 +87,12 @@ func decodeJwt(tokenString string) string {
 		// 'iss' 확인
 		if iss, ok := claims["iss"].(string); ok {
 			fmt.Println("Issuer (iss):", iss)
-			return iss
+			return iss, nil
 		} else {
-			fmt.Println("'iss' 이 없습니다.")
-			return ""
+			return "", errors.New("iss")
 		}
 	} else {
-		log.Println("클레임을 MapClaims로 변환할 수 없습니다.")
-		return ""
+		return "", errors.New("'MapClaims")
 	}
 }
 
