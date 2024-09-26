@@ -15,7 +15,7 @@ type CheckService interface {
 	getSampleVideos() ([]SampleVideoResponse, error)
 	getFaceScores(id uint, param GetFaceScoreParams) ([]FaceScoreResponse, error)
 	getTapBlinkScores(id uint, param GetTapBlinkScoreParams) ([]TapBlinkResponse, error)
-	saveFaceScores(uid uint, request []FaceScoreRequest) (string, error)
+	saveFaceScores(uid uint, request FaceScoreRequest) (string, error)
 	saveTapBlinkScore(request TapBlinkRequest) (string, error)
 }
 
@@ -71,7 +71,7 @@ func (service *checkService) getFaceScores(id uint, param GetFaceScoreParams) ([
 	// 2. 날짜별로 그룹화된 응답을 저장할 맵
 	responseMap := make(map[string]FaceScoreResponse)
 
-	// 3. 데이터를 날짜별로 그룹화하여 맵에 저장
+	// 3. 데이터를 날짜 및 FaceType별로 그룹화하여 맵에 저장
 	for _, v := range faceScores {
 		dateStr := v.CreatedAt.Format("2006-01-02")
 
@@ -79,20 +79,19 @@ func (service *checkService) getFaceScores(id uint, param GetFaceScoreParams) ([
 		if _, exists := responseMap[dateStr]; !exists {
 			responseMap[dateStr] = FaceScoreResponse{
 				TargetDate: dateStr,
-				FaceScores: []FaceScoreInfo{},
+				FaceScores: make(map[uint][]FaceScoreInfo), // FaceType을 키로 설정
 			}
 		}
 
-		// 3.2 FaceScoreInfo를 생성하여 해당 날짜의 응답에 추가
+		// 3.2 FaceScoreInfo 생성
 		faceScoreInfo := FaceScoreInfo{
-			FaceType: v.FaceType,
 			FaceLine: v.FaceLine,
 			Sd:       v.Sd,
 		}
 
-		// 3.3 맵에서 해당 날짜의 응답을 가져와서 FaceScoreInfo 추가
+		// 3.3 해당 날짜의 응답을 가져와서 FaceType별로 추가
 		response := responseMap[dateStr]
-		response.FaceScores = append(response.FaceScores, faceScoreInfo)
+		response.FaceScores[v.FaceType] = append(response.FaceScores[v.FaceType], faceScoreInfo)
 		responseMap[dateStr] = response
 	}
 
@@ -146,7 +145,7 @@ func (service *checkService) getTapBlinkScores(id uint, param GetTapBlinkScorePa
 	return tapBlinkResponses, nil
 }
 
-func (service *checkService) saveFaceScores(uid uint, request []FaceScoreRequest) (string, error) {
+func (service *checkService) saveFaceScores(uid uint, request FaceScoreRequest) (string, error) {
 	// 유효성 검사기 생성
 	validate := validator.New()
 
@@ -166,19 +165,37 @@ func (service *checkService) saveFaceScores(uid uint, request []FaceScoreRequest
 		}
 	}()
 
-	if err := tx.Where("created_at::date = ? AND uid = ? ", targetDate, uid).Delete(&model.FaceScore{}).Error; err != nil {
-		tx.Rollback()
-		return "", errors.New("db error")
+	// 1. 삭제할 faceType 목록을 추출
+	var faceTypes []uint
+	for faceType := range request.FaceScores {
+		if faceType > 5 || faceType == 0 {
+			tx.Rollback()
+			return "", errors.New("check face_type")
+		}
+		faceTypes = append(faceTypes, faceType)
 	}
 
+	// 2. 동일한 uid, targetDate, face_type에 해당하는 기존 데이터를 삭제 (IN 절 사용)
+	if len(faceTypes) > 0 {
+		if err := tx.Where("created_at::date = ? AND uid = ? AND face_type IN (?)", targetDate, uid, faceTypes).Unscoped().Delete(&model.FaceScore{}).Error; err != nil {
+			tx.Rollback()
+			return "", errors.New("db error")
+		}
+	}
+
+	// 3. 데이터를 저장할 슬라이스 생성
 	var faceScores []model.FaceScore
-	for _, v := range request {
-		faceScores = append(faceScores, model.FaceScore{
-			Uid:      uid,
-			FaceType: v.FaceType,
-			FaceLine: v.FaceLine,
-			Sd:       v.Sd,
-		})
+
+	// 4. request.FaceScores에서 데이터를 추출하여 저장할 준비
+	for faceType, faceScoreInfos := range request.FaceScores {
+		for _, faceScoreInfo := range faceScoreInfos {
+			faceScores = append(faceScores, model.FaceScore{
+				Uid:      uid,
+				FaceType: faceType,
+				FaceLine: faceScoreInfo.FaceLine,
+				Sd:       faceScoreInfo.Sd,
+			})
+		}
 	}
 
 	if err := tx.Create(&faceScores).Error; err != nil {

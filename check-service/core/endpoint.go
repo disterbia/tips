@@ -57,7 +57,7 @@ func SaveFaceScoreEndpoint(s CheckService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
-		score := reqMap["queryParams"].([]FaceScoreRequest)
+		score := reqMap["queryParams"].(FaceScoreRequest)
 		code, err := s.saveFaceScores(id, score)
 		if err != nil {
 			return nil, err
