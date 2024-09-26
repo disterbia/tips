@@ -4,6 +4,7 @@ import (
 	"check-service/model"
 	"errors"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -54,7 +55,6 @@ func (service *checkService) getFaceScores(id uint, param GetFaceScoreParams) ([
 	}
 
 	var faceScores []model.FaceScore
-	var faceScoreResponses []FaceScoreResponse
 
 	query := service.db.Where("uid = ?", id)
 	if param.StartDate != "" {
@@ -63,31 +63,51 @@ func (service *checkService) getFaceScores(id uint, param GetFaceScoreParams) ([
 	if param.EndDate != "" {
 		query = query.Where("created <= ?", param.EndDate+" 23:59:59")
 	}
-	query = query.Order("id DESC")
 
 	if err := query.Find(&faceScores).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
-	// 날짜별로 그룹화된 응답을 위한 맵 구조 선언
-	faceScoreMap := make(map[string][]FaceScoreResponse)
+	// 2. 날짜별로 그룹화된 응답을 저장할 맵
+	responseMap := make(map[string]FaceScoreResponse)
 
-	// 날짜별로 FaceScores 그룹화
+	// 3. 데이터를 날짜별로 그룹화하여 맵에 저장
 	for _, v := range faceScores {
-		// 날짜를 'YYYY-MM-DD' 형식으로 포맷
-		targetDate := v.CreatedAt.Format("2006-01-02")
+		dateStr := v.CreatedAt.Format("2006-01-02")
 
-		// FaceScoreResponse로 변환
-		faceScoreResponse := FaceScoreResponse{
+		// 3.1 해당 날짜에 대한 응답이 없으면 새로 생성
+		if _, exists := responseMap[dateStr]; !exists {
+			responseMap[dateStr] = FaceScoreResponse{
+				TargetDate: dateStr,
+				FaceScores: []FaceScoreInfo{},
+			}
+		}
+
+		// 3.2 FaceScoreInfo를 생성하여 해당 날짜의 응답에 추가
+		faceScoreInfo := FaceScoreInfo{
 			FaceType: v.FaceType,
 			FaceLine: v.FaceLine,
 			Sd:       v.Sd,
 		}
 
-		// 날짜에 해당하는 그룹에 추가
-		faceScoreMap[targetDate] = append(faceScoreMap[targetDate], faceScoreResponse)
+		// 3.3 맵에서 해당 날짜의 응답을 가져와서 FaceScoreInfo 추가
+		response := responseMap[dateStr]
+		response.FaceScores = append(response.FaceScores, faceScoreInfo)
+		responseMap[dateStr] = response
 	}
-	return faceScoreResponses, nil
+
+	// 4. 맵을 리스트로 변환
+	var responses []FaceScoreResponse
+	for _, response := range responseMap {
+		responses = append(responses, response)
+	}
+
+	// 5. responses를 날짜 순으로 정렬
+	sort.Slice(responses, func(i, j int) bool {
+		return responses[i].TargetDate < responses[j].TargetDate
+	})
+
+	return responses, nil
 }
 
 func (service *checkService) getTapBlinkScores(id uint, param GetTapBlinkScoreParams) ([]TapBlinkResponse, error) {

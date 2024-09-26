@@ -19,10 +19,13 @@ type SampleVideoResponse struct {
 }
 
 type FaceScoreResponse struct {
-	TargetDate string  `json:"date" example:"YYYY-mm-dd"`
-	FaceType   uint    `json:"face_type"`
-	FaceLine   uint    `json:"face_line"`
-	Sd         float64 `json:"sd"`
+	TargetDate string `json:"date" example:"YYYY-mm-dd"`
+	FaceScores []FaceScoreInfo
+}
+type FaceScoreInfo struct {
+	FaceType uint    `json:"face_type"`
+	FaceLine uint    `json:"face_line"`
+	Sd       float64 `json:"sd"`
 }
 
 type TapBlinkResponse struct {
