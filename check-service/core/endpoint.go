@@ -16,12 +16,12 @@ func GetSampleVideosEndpoint(s CheckService) endpoint.Endpoint {
 	}
 }
 
-func GetFaceScoreEndpoint(s CheckService) endpoint.Endpoint {
+func GetFaceInfoEndpoint(s CheckService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
-		queryParams := reqMap["queryParams"].(GetFaceScoreParams)
-		scores, err := s.getFaceScores(id, queryParams)
+		queryParams := reqMap["queryParams"].(GetFaceInfoParams)
+		scores, err := s.getFaceInfos(id, queryParams)
 		if err != nil {
 			return nil, err
 		}
@@ -53,12 +53,12 @@ func SaveTapBlinkScoreEndpoint(s CheckService) endpoint.Endpoint {
 	}
 }
 
-func SaveFaceScoreEndpoint(s CheckService) endpoint.Endpoint {
+func SaveFaceInfoEndpoint(s CheckService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		reqMap := request.(map[string]interface{})
 		id := reqMap["id"].(uint)
-		score := reqMap["queryParams"].(FaceScoreRequest)
-		code, err := s.saveFaceScores(id, score)
+		score := reqMap["queryParams"].(FaceInfoRequest)
+		code, err := s.saveFaceInfos(id, score)
 		if err != nil {
 			return nil, err
 		}

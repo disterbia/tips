@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type FaceScore struct {
+type FaceInfo struct {
 	gorm.Model
 	User     User `gorm:"foreignKey:Uid"`
 	Uid      uint

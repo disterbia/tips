@@ -38,17 +38,17 @@ func GetSampleVideosHandler(endpoint endpoint.Endpoint) fiber.Handler {
 }
 
 // @Tags 검사 /check
-// @Summary 표정검사 점수 조회
-// @Description 표정검사 점수 조회시 호출
+// @Summary 표정검사 결과 조회
+// @Description 표정검사 결과 조회시 호출
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
 // @Param  start_date  query string  true  "시작날짜 yyyy-mm-dd"
 // @Param  end_date  query string  true  "종료날짜 yyyy-mm-dd"
-// @Success 200 {object} []FaceScoreResponse "점수정보 - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노"
+// @Success 200 {object} []FaceInfoResponse "점수정보 - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /get-face-scores [get]
-func GetFaceScoresHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// @Router /get-face-infos [get]
+func GetFaceInfosHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// 토큰 검증 및 처리
 		id, err := verifyJWT(c)
@@ -56,7 +56,7 @@ func GetFaceScoresHandler(endpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		var queryParams []GetFaceScoreParams
+		var queryParams []GetFaceInfoParams
 
 		if err := c.QueryParser(&queryParams); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -71,7 +71,7 @@ func GetFaceScoresHandler(endpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		resp := response.([]FaceScoreResponse)
+		resp := response.([]FaceInfoResponse)
 		return c.Status(fiber.StatusOK).JSON(resp)
 	}
 }
@@ -118,16 +118,16 @@ func GetScoresHandler(endpoint endpoint.Endpoint) fiber.Handler {
 }
 
 // @Tags 검사 /check
-// @Summary 표정검사 점수 저장
+// @Summary 표정검사 결과 저장
 // @Description 표정검사 완료 후 호출
 // @Produce  json
 // @Param Authorization header string true "Bearer {jwt_token}"
-// @Param request body FaceScoreRequest true "요청 DTO - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노"
+// @Param request body FaceInfoRequest true "요청 DTO - face_type: 1-기쁨 2-슬픔 3-놀람 4-분노"
 // @Success 200 {object} BasicResponse "성공시 200 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /save-face-score [post]
-func SaveFaceScoreHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// @Router /save-face-info [post]
+func SaveFaceInfoHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// 토큰 검증 및 처리
 		id, err := verifyJWT(c)
@@ -140,7 +140,7 @@ func SaveFaceScoreHandler(endpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "Concurrent request detected"})
 		}
 		defer userLocks.Delete(id)
-		var req FaceScoreRequest
+		var req FaceInfoRequest
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}

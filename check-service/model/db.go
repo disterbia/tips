@@ -27,6 +27,6 @@ func NewDB(dataSourceName string) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&SampleVideo{}, &FaceScore{}, &TapBlinkScore{})
+	db.AutoMigrate(&SampleVideo{}, &FaceInfo{}, &TapBlinkScore{})
 	return db, nil
 }

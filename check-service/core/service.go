@@ -13,9 +13,9 @@ import (
 
 type CheckService interface {
 	getSampleVideos() ([]SampleVideoResponse, error)
-	getFaceScores(id uint, param GetFaceScoreParams) ([]FaceScoreResponse, error)
+	getFaceInfos(id uint, param GetFaceInfoParams) ([]FaceInfoResponse, error)
 	getTapBlinkScores(id uint, param GetTapBlinkScoreParams) ([]TapBlinkResponse, error)
-	saveFaceScores(uid uint, request FaceScoreRequest) (string, error)
+	saveFaceInfos(uid uint, request FaceInfoRequest) (string, error)
 	saveTapBlinkScore(request TapBlinkRequest) (string, error)
 }
 
@@ -47,14 +47,14 @@ func (service *checkService) getSampleVideos() ([]SampleVideoResponse, error) {
 	return sampleVideoResponses, nil
 }
 
-func (service *checkService) getFaceScores(id uint, param GetFaceScoreParams) ([]FaceScoreResponse, error) {
+func (service *checkService) getFaceInfos(id uint, param GetFaceInfoParams) ([]FaceInfoResponse, error) {
 	validate := validator.New()
 
 	if err := validate.Struct(param); err != nil {
 		return nil, err
 	}
 
-	var faceScores []model.FaceScore
+	var faceInfos []model.FaceInfo
 
 	query := service.db.Where("uid = ?", id)
 	if param.StartDate != "" {
@@ -64,39 +64,39 @@ func (service *checkService) getFaceScores(id uint, param GetFaceScoreParams) ([
 		query = query.Where("created <= ?", param.EndDate+" 23:59:59")
 	}
 
-	if err := query.Find(&faceScores).Error; err != nil {
+	if err := query.Find(&faceInfos).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
 	// 2. 날짜별로 그룹화된 응답을 저장할 맵
-	responseMap := make(map[string]FaceScoreResponse)
+	responseMap := make(map[string]FaceInfoResponse)
 
 	// 3. 데이터를 날짜 및 FaceType별로 그룹화하여 맵에 저장
-	for _, v := range faceScores {
+	for _, v := range faceInfos {
 		dateStr := v.CreatedAt.Format("2006-01-02")
 
 		// 3.1 해당 날짜에 대한 응답이 없으면 새로 생성
 		if _, exists := responseMap[dateStr]; !exists {
-			responseMap[dateStr] = FaceScoreResponse{
+			responseMap[dateStr] = FaceInfoResponse{
 				TargetDate: dateStr,
-				FaceScores: make(map[uint][]FaceScoreInfo), // FaceType을 키로 설정
+				FaceInfos:  make(map[uint][]FaceInfo), // FaceType을 키로 설정
 			}
 		}
 
-		// 3.2 FaceScoreInfo 생성
-		faceScoreInfo := FaceScoreInfo{
+		// 3.2 FaceInfo 생성
+		faceInfo := FaceInfo{
 			FaceLine: v.FaceLine,
 			Sd:       v.Sd,
 		}
 
 		// 3.3 해당 날짜의 응답을 가져와서 FaceType별로 추가
 		response := responseMap[dateStr]
-		response.FaceScores[v.FaceType] = append(response.FaceScores[v.FaceType], faceScoreInfo)
+		response.FaceInfos[v.FaceType] = append(response.FaceInfos[v.FaceType], faceInfo)
 		responseMap[dateStr] = response
 	}
 
 	// 4. 맵을 리스트로 변환
-	var responses []FaceScoreResponse
+	var responses []FaceInfoResponse
 	for _, response := range responseMap {
 		responses = append(responses, response)
 	}
@@ -145,7 +145,7 @@ func (service *checkService) getTapBlinkScores(id uint, param GetTapBlinkScorePa
 	return tapBlinkResponses, nil
 }
 
-func (service *checkService) saveFaceScores(uid uint, request FaceScoreRequest) (string, error) {
+func (service *checkService) saveFaceInfos(uid uint, request FaceInfoRequest) (string, error) {
 	// 유효성 검사기 생성
 	validate := validator.New()
 
@@ -167,7 +167,7 @@ func (service *checkService) saveFaceScores(uid uint, request FaceScoreRequest) 
 
 	// 1. 삭제할 faceType 목록을 추출
 	var faceTypes []uint
-	for faceType := range request.FaceScores {
+	for faceType := range request.FaceInfos {
 		if faceType > 5 || faceType == 0 {
 			tx.Rollback()
 			return "", errors.New("check face_type")
@@ -177,28 +177,28 @@ func (service *checkService) saveFaceScores(uid uint, request FaceScoreRequest) 
 
 	// 2. 동일한 uid, targetDate, face_type에 해당하는 기존 데이터를 삭제 (IN 절 사용)
 	if len(faceTypes) > 0 {
-		if err := tx.Where("created_at::date = ? AND uid = ? AND face_type IN (?)", targetDate, uid, faceTypes).Unscoped().Delete(&model.FaceScore{}).Error; err != nil {
+		if err := tx.Where("created_at::date = ? AND uid = ? AND face_type IN (?)", targetDate, uid, faceTypes).Unscoped().Delete(&model.FaceInfo{}).Error; err != nil {
 			tx.Rollback()
 			return "", errors.New("db error")
 		}
 	}
 
 	// 3. 데이터를 저장할 슬라이스 생성
-	var faceScores []model.FaceScore
+	var models []model.FaceInfo
 
-	// 4. request.FaceScores에서 데이터를 추출하여 저장할 준비
-	for faceType, faceScoreInfos := range request.FaceScores {
-		for _, faceScoreInfo := range faceScoreInfos {
-			faceScores = append(faceScores, model.FaceScore{
+	// 4. request.FaceInfos에서 데이터를 추출하여 저장할 준비
+	for faceType, faceInfos := range request.FaceInfos {
+		for _, faceInfo := range faceInfos {
+			models = append(models, model.FaceInfo{
 				Uid:      uid,
 				FaceType: faceType,
-				FaceLine: faceScoreInfo.FaceLine,
-				Sd:       faceScoreInfo.Sd,
+				FaceLine: faceInfo.FaceLine,
+				Sd:       faceInfo.Sd,
 			})
 		}
 	}
 
-	if err := tx.Create(&faceScores).Error; err != nil {
+	if err := tx.Create(&models).Error; err != nil {
 		tx.Rollback()
 		return "", errors.New("db error2")
 	}
