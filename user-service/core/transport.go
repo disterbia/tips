@@ -380,3 +380,25 @@ func GetVersionHandeler(endpoint endpoint.Endpoint) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(resp)
 	}
 }
+
+// @Tags 공통 /user
+// @Summary 약관 조회
+// @Description 약관 조회시 호출
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} []PoliceResponse "약관 정보"
+// @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
+// @Router /get-version [get]
+func GetPolicesHandeler(endpoint endpoint.Endpoint) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+
+		response, err := endpoint(c.Context(), nil)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+
+		}
+		resp := response.([]PoliceResponse)
+		return c.Status(fiber.StatusOK).JSON(resp)
+	}
+}

@@ -80,6 +80,12 @@ type AppVersionResponse struct {
 	IosLink       string `json:"ios_link"`
 }
 
+type PoliceResponse struct {
+	PoliceType uint   `json:"police_type"`
+	Title      string `json:"title"`
+	Body       string `json:"body"`
+}
+
 type BasicResponse struct {
 	Code string `json:"code"`
 }

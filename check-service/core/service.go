@@ -58,10 +58,10 @@ func (service *checkService) getFaceInfos(id uint, param GetFaceInfoParams) ([]F
 
 	query := service.db.Where("uid = ?", id)
 	if param.StartDate != "" {
-		query = query.Where("created >= ?", param.StartDate)
+		query = query.Where("created_at >= ?", param.StartDate)
 	}
 	if param.EndDate != "" {
-		query = query.Where("created <= ?", param.EndDate+" 23:59:59")
+		query = query.Where("created_at <= ?", param.EndDate+" 23:59:59")
 	}
 
 	if err := query.Find(&faceInfos).Error; err != nil {
@@ -120,12 +120,12 @@ func (service *checkService) getTapBlinkScores(id uint, param GetTapBlinkScorePa
 	var tapBlinkScores []model.TapBlinkScore
 	var tapBlinkResponses []TapBlinkResponse
 
-	query := service.db.Where("uid = ?", id)
+	query := service.db.Where("uid = ? AND score_type= ? ", id, param.ScoreType)
 	if param.StartDate != "" {
-		query = query.Where("created >= ?", param.StartDate)
+		query = query.Where("created_at >= ?", param.StartDate)
 	}
 	if param.EndDate != "" {
-		query = query.Where("created <= ?", param.EndDate+" 23:59:59")
+		query = query.Where("created_at <= ?", param.EndDate+" 23:59:59")
 	}
 	query = query.Order("id DESC")
 

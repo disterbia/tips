@@ -19,8 +19,8 @@ type SampleVideoResponse struct {
 }
 
 type FaceInfoResponse struct {
-	TargetDate string `json:"date" example:"YYYY-mm-dd"`
-	FaceInfos  map[uint][]FaceInfo
+	TargetDate string              `json:"date" example:"YYYY-mm-dd"`
+	FaceInfos  map[uint][]FaceInfo `json:"face_infos"`
 }
 type FaceInfo struct {
 	FaceLine uint    `json:"face_line"`
@@ -42,9 +42,9 @@ type FaceInfoRequest struct {
 type TapBlinkRequest struct {
 	Uid           uint    `json:"-"`
 	ScoreType     uint    `json:"score_type" validate:"required,min=1,max=2"`
-	SuccessCount  uint    `json:"success_count" validate:"required,min=1,max=100"`
-	ErrorCount    uint    `json:"error_count" validate:"required,min=1,max=100"`
-	ReactionSpeed float64 `json:"reaction_speed" validate:"required,min=1,max=100"`
+	SuccessCount  uint    `json:"success_count" validate:"required,max=100"`
+	ErrorCount    uint    `json:"error_count" validate:"required,max=100"`
+	ReactionSpeed float64 `json:"reaction_speed" validate:"required,gt=0,max=100"`
 }
 
 type SuccessResponse struct {

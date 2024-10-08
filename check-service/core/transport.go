@@ -56,7 +56,7 @@ func GetFaceInfosHandler(endpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		var queryParams []GetFaceInfoParams
+		var queryParams GetFaceInfoParams
 
 		if err := c.QueryParser(&queryParams); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -96,7 +96,7 @@ func GetScoresHandler(endpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		var queryParams []GetTapBlinkScoreParams
+		var queryParams GetTapBlinkScoreParams
 
 		if err := c.QueryParser(&queryParams); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})

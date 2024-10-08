@@ -6,7 +6,6 @@ import (
 
 type AppVersion struct {
 	gorm.Model
-	Id            uint
 	LatestVersion string
 	AndroidLink   string
 	IosLink       string

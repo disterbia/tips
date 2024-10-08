@@ -50,9 +50,9 @@ func main() {
 	// CORS 미들웨어 추가
 	app.Use(cors.New())
 	app.Get("/get-videos", core.GetSampleVideosHandler(getSampleVideos))
-	app.Get("/get-face-scores", core.GetFaceInfosHandler(getFaceScoresEndpoint))
+	app.Get("/get-face-infos", core.GetFaceInfosHandler(getFaceScoresEndpoint))
 	app.Get("/get-scores", core.GetScoresHandler(getScoresEndpoint))
-	app.Post("/save-face-score", core.SaveFaceInfoHandler(saveFaceScoreEndpoint))
+	app.Post("/save-face-info", core.SaveFaceInfoHandler(saveFaceScoreEndpoint))
 	app.Post("/save-score", core.SaveScoreHandler(saveScoreEndpoint))
 
 	log.Fatal(app.Listen(":44411"))

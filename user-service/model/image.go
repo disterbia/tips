@@ -6,7 +6,6 @@ import (
 
 type Image struct {
 	gorm.Model
-	Id   uint
 	User User `gorm:"foreignKey:Uid"`
 	Uid  uint
 

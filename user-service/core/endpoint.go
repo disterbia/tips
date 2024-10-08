@@ -126,3 +126,13 @@ func GetVersionEndpoint(s UserService) endpoint.Endpoint {
 		return version, nil
 	}
 }
+
+func GetPolicesEndpoint(s UserService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		version, err := s.GetPolices()
+		if err != nil {
+			return BasicResponse{Code: err.Error()}, err
+		}
+		return version, nil
+	}
+}

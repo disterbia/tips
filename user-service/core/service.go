@@ -31,6 +31,7 @@ type UserService interface {
 	LinkEmail(uid uint, idToken string) (string, error)
 	RemoveUser(id uint) (string, error)
 	GetVersion() (AppVersionResponse, error)
+	GetPolices() ([]PoliceResponse, error)
 }
 
 type userService struct {
@@ -645,4 +646,19 @@ func (service *userService) GetVersion() (AppVersionResponse, error) {
 
 	versionResponse := AppVersionResponse{LatestVersion: version.LatestVersion, AndroidLink: version.AndroidLink, IosLink: version.IosLink}
 	return versionResponse, nil
+}
+
+func (service *userService) GetPolices() ([]PoliceResponse, error) {
+	var polices []model.Polices
+	if err := service.db.Where("is_last = true").Find(&polices).Error; err != nil {
+		return nil, errors.New("db error")
+	}
+
+	var policeResponse []PoliceResponse
+
+	for _, v := range polices {
+		policeResponse = append(policeResponse, PoliceResponse{Title: v.Title, PoliceType: v.PoliceType, Body: v.Body})
+	}
+
+	return policeResponse, nil
 }

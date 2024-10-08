@@ -56,6 +56,7 @@ func main() {
 	getUserEndpoint := core.GetUserEndpoint(svc)
 	removeUserEndpoint := core.RemoveEndpoint(svc)
 	getVersionEndpoint := core.GetVersionEndpoint(svc)
+	getPolicesEndpoint := core.GetPolicesEndpoint(svc)
 
 	app := fiber.New()
 	app.Use(logger.New())
@@ -70,6 +71,7 @@ func main() {
 
 	app.Get("/get-user", core.GetUserHandler(getUserEndpoint))
 	app.Get("/get-version", core.GetVersionHandeler(getVersionEndpoint))
+	app.Get("/get-police", core.GetPolicesHandeler(getPolicesEndpoint))
 
 	app.Post("/sns-login", core.SnsLoginHandler(loginEndpoint))
 	app.Post("/phone-login", core.PhoneLoginHandler(phoneLoginEndpoint))

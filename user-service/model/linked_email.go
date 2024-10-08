@@ -6,7 +6,6 @@ import (
 
 type LinkedEmail struct {
 	gorm.Model
-	Id      uint
 	Email   string
 	User    User `gorm:"foreignKey:Uid"`
 	Uid     uint
