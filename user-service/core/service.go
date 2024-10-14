@@ -124,12 +124,15 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 					}
 				} else {
 					return "", errors.New("db error4")
-					// 있다면 해당 이메일의 uid로 조회
+
+				}
+			} else {
+				// 있다면 해당 이메일의 uid로 조회
+				if err := service.db.Where("id = ?", linkedEmail.Uid).First(&user).Error; err != nil {
+					return "", errors.New("db error5")
 				}
 			}
-			if err := service.db.Where("id = ?", linkedEmail.Uid).First(&user).Error; err != nil {
-				return "", errors.New("db error5")
-			}
+
 			if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
 				return "", errors.New("db error6")
 			}
