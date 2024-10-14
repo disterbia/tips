@@ -389,7 +389,7 @@ func GetVersionHandeler(endpoint endpoint.Endpoint) fiber.Handler {
 // @Success 200 {object} []PoliceResponse "약관 정보"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /get-version [get]
+// @Router /get-polices [get]
 func GetPolicesHandeler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 

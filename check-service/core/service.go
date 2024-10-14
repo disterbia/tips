@@ -226,7 +226,7 @@ func (service *checkService) saveTapBlinkScore(request TapBlinkRequest) (string,
 		}
 	}()
 
-	if err := tx.Where("created_at::date = ? AND uid = ? ", targetDate, request.Uid).Delete(&model.TapBlinkScore{}).Error; err != nil {
+	if err := tx.Where("created_at::date = ? AND uid = ? AND score_type=? ", targetDate, request.Uid, request.ScoreType).Unscoped().Delete(&model.TapBlinkScore{}).Error; err != nil {
 		tx.Rollback()
 		return "", errors.New("db error")
 	}

@@ -359,20 +359,30 @@ func extractKidFromToken(token string) (string, error) {
 // Google ID 토큰을 검증하고 이메일을 반환
 func validateGoogleIDToken(idToken string) (string, error) {
 	log.Print("idToken: ", idToken)
-	// idtoken 패키지를 사용하여 토큰 검증
-	payload, err := idtoken.Validate(context.Background(), idToken, "390432007084-1hqslpiclba2hucb6hl41acecv1qekbt.apps.googleusercontent.com")
-	if err != nil {
-		log.Printf("Token validation error: %v", err)
-		return "", err
+
+	// 여러 클라이언트 ID를 허용
+	audiences := []string{
+		"390432007084-1hqslpiclba2hucb6hl41acecv1qekbt.apps.googleusercontent.com", // 웹 클라이언트 ID
+		"390432007084-qbvrq02qrq43jr9qtvnmujivdm9oaigs.apps.googleusercontent.com", // iOS 클라이언트 ID
 	}
 
-	// 이메일 추출
-	email, ok := payload.Claims["email"].(string)
-	if !ok {
-		return "", errors.New("email claim not found in token")
+	var lastError error
+	for _, aud := range audiences {
+		payload, err := idtoken.Validate(context.Background(), idToken, aud)
+		if err == nil {
+			// 이메일 추출
+			email, ok := payload.Claims["email"].(string)
+			if !ok {
+				return "", errors.New("email claim not found in token")
+			}
+			return email, nil
+		}
+		lastError = err
+		log.Printf("Token validation error for %s: %v", aud, err)
 	}
 
-	return email, nil
+	// 모든 audience에 대해 검증 실패
+	return "", fmt.Errorf("token validation failed for all audiences: %v", lastError)
 }
 
 func appleLogin(request LoginRequest) (string, error) {

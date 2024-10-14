@@ -71,7 +71,7 @@ func main() {
 
 	app.Get("/get-user", core.GetUserHandler(getUserEndpoint))
 	app.Get("/get-version", core.GetVersionHandeler(getVersionEndpoint))
-	app.Get("/get-police", core.GetPolicesHandeler(getPolicesEndpoint))
+	app.Get("/get-polices", core.GetPolicesHandeler(getPolicesEndpoint))
 
 	app.Post("/sns-login", core.SnsLoginHandler(loginEndpoint))
 	app.Post("/phone-login", core.PhoneLoginHandler(phoneLoginEndpoint))

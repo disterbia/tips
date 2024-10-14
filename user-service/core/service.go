@@ -649,7 +649,7 @@ func (service *userService) GetVersion() (AppVersionResponse, error) {
 }
 
 func (service *userService) GetPolices() ([]PoliceResponse, error) {
-	var polices []model.Polices
+	var polices []model.Police
 	if err := service.db.Where("is_last = true").Find(&polices).Error; err != nil {
 		return nil, errors.New("db error")
 	}

@@ -4,9 +4,10 @@ import (
 	"gorm.io/gorm"
 )
 
-type Polices struct {
+type Police struct {
 	gorm.Model
 	Title      string
 	Body       string
 	PoliceType uint
+	IsLast     bool
 }
