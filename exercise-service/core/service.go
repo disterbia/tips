@@ -171,7 +171,7 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	}
 
 	var exercises []model.Exercise
-	if err := service.db.Where("uid = ? AND is_active = ?", uid, true).Find(&exercises).Error; err != nil {
+	if err := service.db.Where("uid = ? ", uid).Unscoped().Find(&exercises).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
@@ -209,11 +209,18 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 		if exerEnd == nil || exerEnd.After(endDate) {
 			exerEnd = &endDate
 		}
+		// 운동이 활성화되지 않았고, 해당 날짜 이후에는 보여주지 않도록 처리
+
 		for d := *exerStart; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 0, 1) {
 			weekDay := int(d.Weekday())
-
+			dateStr := d.Format("2006-01-02")
+			// 비활성화된 운동은 수행 기록이 없는 경우 날짜에 표시되지 않도록 처리
+			if !exercise.IsActive {
+				if _, exists := exerciseTakeMap[exercise.ID][dateStr]; !exists {
+					continue
+				}
+			}
 			if contains(exercise.Weekdays, int64(weekDay)) {
-				dateStr := d.Format("2006-01-02")
 				timeTaken := make(map[string]*uint)
 
 				for _, timeStr := range exercise.Times {
@@ -260,7 +267,7 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 
 		var found bool
 
-		// 8.1. 이미 응답에 해당 날짜의 기록이 있는지 확인합니다.
+		// 8.1. 해당 날짜의 기록이 있는지 확인합니다.
 		for i, res := range responses {
 			if res.DateTaken == dateStr {
 				found = true

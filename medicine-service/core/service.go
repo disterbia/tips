@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"medicine-service/model"
 	"sort"
 	"strings"
@@ -184,7 +183,7 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 
 	// 2. 사용자의 의약품 리스트를 데이터베이스에서 가져옵니다.
 	var medicines []model.Medicine
-	if err := service.db.Where("uid = ? AND is_active = ?", uid, true).Find(&medicines).Error; err != nil {
+	if err := service.db.Where("uid = ? ", uid).Unscoped().Find(&medicines).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
@@ -231,10 +230,15 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 		// 7. 의약품의 복용 기간 동안 반복합니다.
 		for d := *medStart; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 0, 1) {
 			weekDay := int(d.Weekday())
-			log.Println(weekDay)
+			dateStr := d.Format("2006-01-02")
+			// 비활성화된 약물은 복용 기록이 없는 경우 날짜에 표시되지 않도록 처리
+			if !medicine.IsActive {
+				if _, exists := medicineTakeMap[medicine.ID][dateStr]; !exists {
+					continue
+				}
+			}
 			// 7.1. 해당 날짜의 요일이 의약품의 복용 요일에 포함되는지 확인합니다.
 			if contains(medicine.Weekdays, int64(weekDay)) {
-				dateStr := d.Format("2006-01-02")
 
 				timeTaken := make(map[string]*uint)
 

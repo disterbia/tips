@@ -42,9 +42,9 @@ type FaceInfoRequest struct {
 type TapBlinkRequest struct {
 	Uid           uint    `json:"-"`
 	ScoreType     uint    `json:"score_type" validate:"required,min=1,max=2"`
-	SuccessCount  uint    `json:"success_count" validate:"omitempty,required,max=100"`
-	ErrorCount    uint    `json:"error_count" validate:"omitempty,required,max=100"`
-	ReactionSpeed float64 `json:"reaction_speed" validate:"required,gt=0,max=100"`
+	SuccessCount  uint    `json:"success_count" validate:"omitempty,required,max=1000"`
+	ErrorCount    uint    `json:"error_count" validate:"omitempty,required,max=1000"`
+	ReactionSpeed float64 `json:"reaction_speed" validate:"required,gt=0,max=60"`
 }
 
 type SuccessResponse struct {
