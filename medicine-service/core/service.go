@@ -183,13 +183,15 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 
 	// 2. 사용자의 의약품 리스트를 데이터베이스에서 가져옵니다.
 	var medicines []model.Medicine
-	if err := service.db.Where("uid = ? ", uid).Unscoped().Find(&medicines).Error; err != nil {
+	if err := service.db.Where("uid = ? ", uid).Find(&medicines).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
 	// 3. 사용자의 의약품 복용 기록을 데이터베이스에서 가져옵니다.
 	var medicineTakes []model.MedicineTake
-	if err := service.db.Where("uid = ?", uid).Preload("Medicine").Find(&medicineTakes).Error; err != nil {
+	if err := service.db.Where("uid = ?", uid).Preload("Medicine", func(db *gorm.DB) *gorm.DB {
+		return db.Unscoped()
+	}).Find(&medicineTakes).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 

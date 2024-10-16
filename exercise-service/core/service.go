@@ -171,12 +171,15 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	}
 
 	var exercises []model.Exercise
-	if err := service.db.Where("uid = ? ", uid).Unscoped().Find(&exercises).Error; err != nil {
+	if err := service.db.Where("uid = ? ", uid).Find(&exercises).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
 	var exerciseTakes []model.ExerciseTake
-	if err := service.db.Where("uid = ?", uid).Preload("Exercise").Find(&exerciseTakes).Error; err != nil {
+	// exercise 만 unscoped 먹이기 exerciseTakes는 제외
+	if err := service.db.Where("uid = ?", uid).Preload("Exercise", func(db *gorm.DB) *gorm.DB {
+		return db.Unscoped()
+	}).Find(&exerciseTakes).Error; err != nil {
 		return nil, errors.New("db error")
 	}
 
