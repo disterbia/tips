@@ -11,7 +11,7 @@ type User struct {
 	Name       string
 	Email      *string
 	DeviceID   string
-	FCMToken   string
+	FcmToken   string
 	SnsType    uint
 	Phone      string
 	Gender     bool
