@@ -134,7 +134,7 @@ func main() {
 
 	app.Get("/get-messages", core.GetMessagesHandler(getMessagesEndpoint))
 	app.Post("/remove-messages", core.RemoveMessagesHandler(removeMessagesEndpoint))
-	app.Post("/read-message", core.ReadAllHandler(readMessagesNotisEndpoint))
+	app.Post("/read-messages", core.ReadAllHandler(readMessagesNotisEndpoint))
 
 	log.Fatal(app.Listen(":44408"))
 }

@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -85,7 +86,7 @@ func UpdateUserEndpoint(s UserService) endpoint.Endpoint {
 func GetUserEndpoint(s UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		id := request.(uint)
-		result, err := s.GetUser(id)
+		result, err := s.getUser(id)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -97,7 +98,7 @@ func LinkEndpoint(s UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		reqMap := request.(LinkRequest)
 
-		code, err := s.LinkEmail(reqMap.Id, reqMap.IdToken)
+		code, err := s.linkEmail(reqMap.Id, reqMap.IdToken)
 
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
@@ -109,7 +110,7 @@ func LinkEndpoint(s UserService) endpoint.Endpoint {
 func RemoveEndpoint(s UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		uid := request.(uint)
-		code, err := s.RemoveUser(uid)
+		code, err := s.removeUser(uid)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -119,7 +120,7 @@ func RemoveEndpoint(s UserService) endpoint.Endpoint {
 
 func GetVersionEndpoint(s UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		version, err := s.GetVersion()
+		version, err := s.getVersion()
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
@@ -129,10 +130,31 @@ func GetVersionEndpoint(s UserService) endpoint.Endpoint {
 
 func GetPolicesEndpoint(s UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		version, err := s.GetPolices()
+		version, err := s.getPolices()
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
 		return version, nil
+	}
+}
+
+func AppleCallbackEndpoint(s UserService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(AppleCallbackRequest)
+
+		if req.Code == "" {
+			return nil, errors.New("authorization code is missing")
+		}
+
+		// Authorization Code로 애플과 통신해 토큰을 교환합니다.
+		tokenResponse, err := s.exchangeCodeForToken(req.Code)
+		if err != nil {
+			return nil, err
+		}
+
+		return AppleCallbackResponse{
+			AccessToken: tokenResponse.AccessToken,
+			IDToken:     tokenResponse.IDToken,
+		}, nil
 	}
 }

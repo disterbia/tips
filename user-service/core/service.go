@@ -3,9 +3,16 @@
 package core
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,11 +34,12 @@ type UserService interface {
 	sendAuthCodeForSingin(number string) (string, error)
 	sendAuthCodeForLogin(number string) (string, error)
 	updateUser(request UserRequest) (string, error)
-	GetUser(id uint) (UserResponse, error)
-	LinkEmail(uid uint, idToken string) (string, error)
-	RemoveUser(id uint) (string, error)
-	GetVersion() (AppVersionResponse, error)
-	GetPolices() ([]PoliceResponse, error)
+	getUser(id uint) (UserResponse, error)
+	linkEmail(uid uint, idToken string) (string, error)
+	removeUser(id uint) (string, error)
+	getVersion() (AppVersionResponse, error)
+	getPolices() ([]PoliceResponse, error)
+	exchangeCodeForToken(code string) (*TokenResponse, error)
 }
 
 type userService struct {
@@ -490,7 +498,7 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 	return "200", nil
 }
 
-func (service *userService) LinkEmail(uid uint, idToken string) (string, error) {
+func (service *userService) linkEmail(uid uint, idToken string) (string, error) {
 	iss, err := decodeJwt(idToken)
 
 	if err != nil {
@@ -584,7 +592,7 @@ func saveLinkedEmail(uid uint, email string, service *userService, snsType uint)
 	return nil
 }
 
-func (service *userService) GetUser(id uint) (UserResponse, error) {
+func (service *userService) getUser(id uint) (UserResponse, error) {
 	var user model.User
 	result := service.db.Debug().Preload("ProfileImages", "type = ?", PROFILEIMAGETYPE).
 		Preload("LinkedEmails").First(&user, id)
@@ -634,14 +642,14 @@ func (service *userService) GetUser(id uint) (UserResponse, error) {
 	return userResponse, nil
 }
 
-func (service *userService) RemoveUser(id uint) (string, error) {
+func (service *userService) removeUser(id uint) (string, error) {
 	if err := service.db.Where("id = ?", id).Delete(&model.User{}).Error; err != nil {
 		return "", errors.New("db error")
 	}
 	return "200", nil
 }
 
-func (service *userService) GetVersion() (AppVersionResponse, error) {
+func (service *userService) getVersion() (AppVersionResponse, error) {
 	var version model.AppVersion
 	if err := service.db.Last(&version).Error; err != nil {
 		return AppVersionResponse{}, errors.New("db error")
@@ -651,7 +659,7 @@ func (service *userService) GetVersion() (AppVersionResponse, error) {
 	return versionResponse, nil
 }
 
-func (service *userService) GetPolices() ([]PoliceResponse, error) {
+func (service *userService) getPolices() ([]PoliceResponse, error) {
 	var polices []model.Police
 	if err := service.db.Where("is_last = true").Find(&polices).Error; err != nil {
 		return nil, errors.New("db error")
@@ -664,4 +672,55 @@ func (service *userService) GetPolices() ([]PoliceResponse, error) {
 	}
 
 	return policeResponse, nil
+}
+
+// ExchangeCodeForToken은 애플 서버와 통신해 Authorization Code를 토큰으로 교환합니다.
+func (s *userService) exchangeCodeForToken(code string) (*TokenResponse, error) {
+	clientID := os.Getenv("APPLE_CLIENT_ID")
+	keyID := os.Getenv("APPLE_KEY_ID")
+	teamID := os.Getenv("APPLE_TEAM_ID")
+	privateKey := os.Getenv("APPLE_PRIVATE_KEY")
+
+	// client_secret 생성
+	clientSecret, err := GenerateClientSecret(keyID, teamID, clientID, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// 요청 데이터 생성
+	data := url.Values{}
+	data.Set("client_id", clientID)
+	data.Set("client_secret", clientSecret)
+	data.Set("code", code)
+	data.Set("grant_type", "authorization_code")
+	data.Set("redirect_uri", "https://haruharulab.com/user/apple/callback")
+
+	// POST 요청 생성
+	req, err := http.NewRequest("POST", "https://appleid.apple.com/auth/token", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// 요청 전송
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// 응답 확인
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to exchange token, status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// 응답 파싱
+	var tokenResponse TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResponse); err != nil {
+		return nil, err
+	}
+
+	return &tokenResponse, nil
 }

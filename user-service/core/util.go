@@ -3,9 +3,12 @@ package core
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"image"
@@ -603,4 +606,52 @@ func getImageFormat(imgData []byte) (contentType, extension string, err error) {
 	}
 
 	return contentType, extension, nil
+}
+
+// Apple의 client_secret을 생성하는 함수
+func GenerateClientSecret(keyID, teamID, clientID, privateKey string) (string, error) {
+	// JWT 클레임 설정
+	claims := jwt.MapClaims{
+		"iss": teamID,                               // Team ID
+		"iat": time.Now().Unix(),                    // 현재 시간
+		"exp": time.Now().Add(6 * time.Hour).Unix(), // 만료 시간 (최대 6개월)
+		"aud": "https://appleid.apple.com",          // Audience
+		"sub": clientID,                             // Service ID
+	}
+
+	// JWT 생성 및 헤더에 키 ID 추가
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token.Header["kid"] = keyID
+
+	// PEM 포맷의 비공개 키 파싱
+	parsedKey, err := parsePrivateKey(privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse private key: %v", err)
+	}
+
+	// JWT 서명 생성
+	return token.SignedString(parsedKey)
+}
+
+// PEM 형식의 개인 키를 파싱하는 함수 (PKCS8 지원)
+func parsePrivateKey(privateKey string) (*ecdsa.PrivateKey, error) {
+	// PEM 블록 추출
+	block, _ := pem.Decode([]byte(privateKey))
+	if block == nil || block.Type != "PRIVATE KEY" {
+		return nil, errors.New("invalid private key: not a valid PEM block")
+	}
+
+	// PKCS8 형식의 키 파싱
+	parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// 키 타입 확인 및 변환
+	ecPrivateKey, ok := parsedKey.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("private key is not of type ECDSA")
+	}
+
+	return ecPrivateKey, nil
 }

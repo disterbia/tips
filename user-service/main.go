@@ -58,6 +58,8 @@ func main() {
 	getVersionEndpoint := core.GetVersionEndpoint(svc)
 	getPolicesEndpoint := core.GetPolicesEndpoint(svc)
 
+	appleCallbackEndpoint := core.AppleCallbackEndpoint(svc)
+
 	app := fiber.New()
 	app.Use(logger.New())
 	// Swagger 설정
@@ -72,6 +74,8 @@ func main() {
 	app.Get("/get-user", core.GetUserHandler(getUserEndpoint))
 	app.Get("/get-version", core.GetVersionHandeler(getVersionEndpoint))
 	app.Get("/get-polices", core.GetPolicesHandeler(getPolicesEndpoint))
+	// app.Get("/apple/callback", core.AppleCallbackHandler(appleCallbackEndpoint))
+	app.Post("/apple/callback", core.AppleCallbackHandler(appleCallbackEndpoint))
 
 	app.Post("/sns-login", core.SnsLoginHandler(loginEndpoint))
 	app.Post("/phone-login", core.PhoneLoginHandler(phoneLoginEndpoint))

@@ -86,6 +86,27 @@ type PoliceResponse struct {
 	Body       string `json:"body"`
 }
 
+// AppleCallbackRequest는 Authorization Code를 담는 요청 구조체
+type AppleCallbackRequest struct {
+	Code  string `json:"code"`
+	State string `json:"state"`
+}
+
+// AppleCallbackResponse는 ID Token과 Access Token을 담는 응답 구조체
+type AppleCallbackResponse struct {
+	AccessToken string `json:"access_token"`
+	IDToken     string `json:"id_token"`
+}
+
+// TokenResponse는 애플 서버의 응답을 매핑하는 구조체입니다.
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	IDToken      string `json:"id_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type BasicResponse struct {
 	Code string `json:"code"`
 }

@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -402,3 +404,82 @@ func GetPolicesHandeler(endpoint endpoint.Endpoint) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(resp)
 	}
 }
+
+func AppleCallbackHandler(endpoint endpoint.Endpoint) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		log.Println("POST!!!")
+		code := c.Query("code")
+		state := c.Query("state")
+		log.Println("code:", code, "state:", state)
+		// POST 요청에서 body 파싱
+		var req AppleCallbackRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid request body",
+			})
+		}
+
+		if req.Code == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "authorization code is missing",
+			})
+		}
+
+		// 엔드포인트 호출
+		response, err := endpoint(context.Background(), req)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// 응답에서 ID 토큰 추출
+		resp := response.(AppleCallbackResponse)
+		idToken := resp.IDToken
+		log.Println("ID Token:", idToken)
+
+		// ID 토큰을 앱 딥 링크로 리다이렉트
+		appScheme := "myapp://callback" // 앱의 딥 링크 URI 스킴
+		redirectURL := fmt.Sprintf("%s?id_token=%s", appScheme, idToken)
+
+		// 앱으로 리다이렉트 (302 리다이렉트)
+		return c.Redirect(redirectURL, fiber.StatusFound)
+	}
+}
+
+// func AppleCallbackHandler(endpoint endpoint.Endpoint) fiber.Handler {
+// 	return func(c *fiber.Ctx) error {
+// 		log.Println("POST!!!")
+// 		code := c.Query("code")
+// 		state := c.Query("state")
+// 		log.Println("code:", code, "state:", state)
+// 		// POST 요청에서 body 파싱
+// 		var req AppleCallbackRequest
+// 		if err := c.BodyParser(&req); err != nil {
+// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 				"error": "invalid request body",
+// 			})
+// 		}
+
+// 		if req.Code == "" {
+// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 				"error": "authorization code is missing",
+// 			})
+// 		}
+
+// 		// 엔드포인트 호출
+// 		response, err := endpoint(context.Background(), req)
+// 		if err != nil {
+// 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+// 				"error": err.Error(),
+// 			})
+// 		}
+
+// 		resp := response.(AppleCallbackResponse)
+// 		log.Println("idToken:", resp.IDToken)
+// 		return c.JSON(fiber.Map{
+// 			"access_token": resp.AccessToken,
+// 			"id_token":     resp.IDToken,
+// 		})
+// 	}
+// }

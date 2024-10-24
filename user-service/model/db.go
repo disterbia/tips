@@ -30,7 +30,7 @@ func NewDB(dataSourceName string) (*gorm.DB, error) {
 	//    인덱스 이름은 DB에서 직접 확인하고 수정 가능
 	db.Exec("DROP INDEX IF EXISTS uni_users_email;")
 
-	// 2. 조건부 인덱스를 생성: DeletedAt이 NULL인 경우에만 적용
+	// 2. 조건부 인덱스를 생성: DeletedAt이 NULL인 경우에만 유니크 적용
 	db.Exec("CREATE UNIQUE INDEX unique_email_on_users ON users (email) WHERE deleted_at IS NULL;")
 
 	db.AutoMigrate(&AppVersion{}, &AuthCode{}, &Image{}, &LinkedEmail{}, &User{}, &VerifiedTarget{}, &Police{})

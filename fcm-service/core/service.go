@@ -113,7 +113,7 @@ func sendPendingNotifications(db *gorm.DB) {
 				"uid":                strconv.FormatUint(uint64(n.Uid), 10),
 				"type":               strconv.FormatUint(uint64(n.Type), 10),
 				"notification_count": strconv.FormatUint(uint64(notificationCount), 10),
-				"time":               n.CreatedAt.Format("2006-01-02"),
+				"time":               currentDate,
 				"parent_id":          strconv.FormatUint(uint64(n.ParentId), 10),
 			},
 			Notification: &messaging.Notification{
