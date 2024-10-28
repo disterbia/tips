@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"exercise-service/model"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -44,11 +45,13 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 
 	name := strings.TrimSpace(r.Name)
 	if utf8.RuneCountInString(name) > 10 || len(name) == 0 {
+		log.Println("validate")
 		return "", errors.New("validate name")
 	}
 
 	for _, v := range r.Weekdays {
 		if v > 6 {
+			log.Println("validate")
 			return "", errors.New("validate weekdays")
 		}
 		weekdays = append(weekdays, v)
@@ -60,6 +63,7 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 	for _, v := range r.Times {
 		time, err := time.Parse("15:04", v)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("validate times")
 		}
 		times = append(times, time.Format("15:04"))
@@ -68,6 +72,7 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 	if r.StartAt != "" {
 		time, err := time.Parse("2006-01-02", r.StartAt)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("invalid date format, should be YYYY-MM-DD")
 		}
 		startAt = &time
@@ -75,6 +80,7 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 	if r.EndAt != "" {
 		time, err := time.Parse("2006-01-02", r.EndAt)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("invalid date format, should be YYYY-MM-DD")
 		}
 		endAt = &time
@@ -83,6 +89,7 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 	var exercise model.Exercise
 	if err := service.db.Where("id = ? AND uid = ? ", r.Id, r.Uid).First(&exercise).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 	}
@@ -96,6 +103,7 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 	exercise.IsActive = r.IsActive
 
 	if err := service.db.Save(&exercise).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -114,10 +122,12 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 		}
 		eventData, err := json.Marshal(notificationRequest)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("json marshal error")
 		}
 
 		if err := service.nats.Publish("save-exercise", eventData); err != nil {
+			log.Println(err)
 			return "", errors.New("nats publish error")
 		}
 	} else {
@@ -128,10 +138,12 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 		}
 		eventData, err := json.Marshal(notificationRequest)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("json marshal error")
 		}
 
 		if err := service.nats.Publish("remove-exercise", eventData); err != nil {
+			log.Println(err)
 			return "", errors.New("nats publish error")
 		}
 	}
@@ -141,6 +153,7 @@ func (service *exerciseService) saveExercise(r ExerciseRequest) (string, error) 
 
 func (service *exerciseService) removeExercise(id uint, uid uint) (string, error) {
 	if err := service.db.Where("id =? AND uid =?", id, uid).Delete(&model.Exercise{}).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -152,10 +165,12 @@ func (service *exerciseService) removeExercise(id uint, uid uint) (string, error
 
 	eventData, err := json.Marshal(notificationRequest)
 	if err != nil {
+		log.Println(err)
 		return "", errors.New("json marshal error")
 	}
 
 	if err := service.nats.Publish("remove-exercise", eventData); err != nil {
+		log.Println(err)
 		return "", errors.New("nats publish error")
 	}
 
@@ -167,12 +182,14 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	var user model.User
 
 	if err := service.db.Where("id = ?", uid).First(&user).Error; err != nil {
-		return nil, errors.New("db error")
+		log.Println("db error1")
+		return nil, errors.New("db error1")
 	}
 
 	var exercises []model.Exercise
 	if err := service.db.Where("uid = ? AND is_active = true", uid).Find(&exercises).Error; err != nil {
-		return nil, errors.New("db error")
+		log.Println("db error2")
+		return nil, errors.New("db error2")
 	}
 
 	var exerciseTakes []model.ExerciseTake
@@ -180,7 +197,8 @@ func (service *exerciseService) getExpects(uid uint) ([]ExerciseTakeResponse, er
 	if err := service.db.Where("uid = ?", uid).Preload("Exercise", func(db *gorm.DB) *gorm.DB {
 		return db.Unscoped()
 	}).Find(&exerciseTakes).Error; err != nil {
-		return nil, errors.New("db error")
+		log.Println("db error3")
+		return nil, errors.New("db error3")
 	}
 
 	//  예: exerciseTakeMap["2024-08-08"]["08:00"] = 1 (복용 기록 ID)
@@ -329,6 +347,7 @@ func (service *exerciseService) getExercises(id uint) ([]ExerciseResponse, error
 	var exercises []model.Exercise
 
 	if err := service.db.Where("uid = ?", id).Find(&exercises).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -357,11 +376,13 @@ func (service *exerciseService) doExercise(request TakeExercise) (string, error)
 
 	_, err := time.Parse("15:04", request.TimeTaken)
 	if err != nil {
+		log.Println(err)
 		return "", errors.New("invalid time format, should be HH:MM")
 	}
 
 	dateTaken, err := time.Parse("2006-01-02", request.DateTaken)
 	if err != nil {
+		log.Println(err)
 		return "", errors.New("invalid date format, should be YYYY-MM-DD")
 	}
 
@@ -371,16 +392,19 @@ func (service *exerciseService) doExercise(request TakeExercise) (string, error)
 		request.ExerciseId, request.Uid, dateTaken, request.TimeTaken).First(&exerciseTake)
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 	}
 	if result.RowsAffected != 0 {
+		log.Println("already")
 		return "", errors.New("already taken")
 	}
 
 	exerciseTake = model.ExerciseTake{ExerciseID: request.ExerciseId, Uid: request.Uid, DateTaken: dateTaken, TimeTaken: request.TimeTaken}
 
 	if err := service.db.Create(&exerciseTake).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -390,6 +414,7 @@ func (service *exerciseService) doExercise(request TakeExercise) (string, error)
 func (service *exerciseService) undoExercise(id, uid uint) (string, error) {
 
 	if err := service.db.Where("id = ? AND uid = ?", id, uid).Unscoped().Delete(&model.ExerciseTake{}).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 

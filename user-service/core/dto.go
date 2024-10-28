@@ -105,6 +105,7 @@ type TokenResponse struct {
 	ExpiresIn    int    `json:"expires_in"`
 	TokenType    string `json:"token_type"`
 	RefreshToken string `json:"refresh_token"`
+	Code         string `json:"code"`
 }
 
 type BasicResponse struct {

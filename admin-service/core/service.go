@@ -54,20 +54,24 @@ func (service *adminService) login(request LoginRequest) (string, error) {
 	password := strings.TrimSpace(request.Password)
 
 	if password == "" {
+		log.Println("empty")
 		return "", errors.New("empty")
 	}
 
 	// 이메일로 사용자 조회
 	if err := service.db.Where("email = ? AND role_id = ?", request.Email, ADMINROLE).First(&u).Error; err != nil {
+		log.Println("-2")
 		return "", errors.New("-2")
 	}
 
 	// 비밀번호 비교
 	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(request.Password)); err != nil {
+		log.Println("-2")
 		return "", errors.New("-2")
 	}
 
 	if !*u.IsApproval {
+		log.Println("-1")
 		return "", errors.New("-1")
 	}
 
@@ -96,6 +100,7 @@ func (service *adminService) searchHospitals(request SearchParam) ([]HospitalRes
 		Limit(pageSize).
 		Offset(offset).
 		Find(&hospitals).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -110,6 +115,7 @@ func (service *adminService) searchHospitals(request SearchParam) ([]HospitalRes
 func (service *adminService) getPolicies() ([]PolicyResponse, error) {
 	var policies []model.Policy
 	if err := service.db.Where("is_last = true").Find(&policies).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -132,11 +138,13 @@ func (service *adminService) sendAuthCodeForSignin(number string) (string, error
 	result := service.db.Debug().Where("phone = ?", number).First(&model.User{})
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 
 	} else if result.RowsAffected > 0 {
 		// 레코드가 존재할 때
+		log.Println("-1")
 		return "", errors.New("-1")
 	}
 
@@ -154,6 +162,7 @@ func (service *adminService) sendAuthCodeForSignin(number string) (string, error
 
 func (service *adminService) verifyCode(target, code string) (string, error) {
 	if target == "" || code == "" {
+		log.Println("-1")
 		return "", errors.New("-1")
 	}
 
@@ -162,9 +171,11 @@ func (service *adminService) verifyCode(target, code string) (string, error) {
 	var authCode model.AuthCode
 
 	if err := service.db.Where("(phone = ? OR email = ?) AND created_at >= ? ", target, target, threeMinutesAgo).Last(&authCode).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	if authCode.Code != code {
+		log.Println("-1")
 		return "", errors.New("-1")
 	}
 
@@ -178,11 +189,13 @@ func (service *adminService) verifyCode(target, code string) (string, error) {
 
 	if err := tx.Where("(phone = ? OR email = ?)", target, target).Unscoped().Delete(&model.AuthCode{}).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error3")
 		return "", errors.New("db error3")
 	}
 
 	if err := tx.Create(&model.VerifiedTarget{Target: target}).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -193,17 +206,20 @@ func (service *adminService) verifyCode(target, code string) (string, error) {
 
 func (service *adminService) signIn(r SignInRequest) (string, error) {
 	if err := validateSignIn(r); err != nil {
+		log.Println("-21")
 		return "", errors.New("-2")
 	}
 
 	birthday, err := time.Parse("2006-01-02", r.Birthday)
 	if err != nil {
+		log.Println("-22")
 		return "", errors.New("-2")
 	}
 	// 비밀번호 공백 제거
 	password := strings.TrimSpace(r.Password)
 
 	if password == "" {
+		log.Println("-23")
 		return "", errors.New("-2")
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.Password), bcrypt.DefaultCost)
@@ -216,8 +232,10 @@ func (service *adminService) signIn(r SignInRequest) (string, error) {
 
 	if err := service.db.Where("target = ? AND created_at >= ?", r.Phone, thirtyMinutesAgo).Last(&model.VerifiedTarget{}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("-1")
 			return "", errors.New("-1") // 인증해야함
 		}
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -228,8 +246,10 @@ func (service *adminService) signIn(r SignInRequest) (string, error) {
 
 	if err := service.db.Create(&user).Error; err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
+			log.Println("-3")
 			return "", errors.New("-3")
 		}
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -240,14 +260,17 @@ func (service *adminService) sendAuthCodeForId(r FindIdRequest) (string, error) 
 
 	birthday, err := time.Parse("2006-01-02", r.Birthday)
 	if err != nil {
+		log.Println("-1")
 		return "", errors.New("-1")
 	}
 
 	var user model.User
 	if err := service.db.Where("name = ? AND phone = ? AND birthday = ? AND role_id = ?", r.Name, r.Phone, birthday, ADMINROLE).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("-1")
 			return "", errors.New("-1") // 찾을수 없음
 		}
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -258,6 +281,7 @@ func (service *adminService) sendAuthCodeForId(r FindIdRequest) (string, error) 
 	}
 
 	if err := service.db.Create(&model.AuthCode{Phone: r.Phone, Code: code}).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -268,6 +292,7 @@ func (service *adminService) findId(r FindIdRequest) (string, error) {
 
 	birthday, err := time.Parse("2006-01-02", r.Birthday)
 	if err != nil {
+		log.Println("-2")
 		return "", errors.New("-2")
 	}
 
@@ -276,16 +301,20 @@ func (service *adminService) findId(r FindIdRequest) (string, error) {
 
 	if err := service.db.Where("target = ? AND created_at >= ?", r.Phone, oneMinuteAgo).Last(&model.VerifiedTarget{}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("-1")
 			return "", errors.New("-1") // 인증해야함
 		}
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
 	var user model.User
 	if err := service.db.Where("name = ? AND phone = ? AND birthday = ? AND role_id = ?", r.Name, r.Phone, birthday, ADMINROLE).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("-2")
 			return "", errors.New("-2") // 찾을수 없음
 		}
+		log.Println("db error")
 		return "", errors.New("db error2")
 	}
 
@@ -302,8 +331,10 @@ func (service *adminService) sendAuthCodeForPw(r FindPwRequest) (string, error) 
 	if r.Phone == "" {
 		if err := service.db.Where("email = ? AND role_id = ? ", r.Email, ADMINROLE).First(&model.User{}).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Println("-1")
 				return "", errors.New("-1") // 찾을수 없음
 			}
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 		response, err := service.emailClient.SendCodeEmail(context.Background(), &pb.EmailCodeRequest{
@@ -329,18 +360,22 @@ func (service *adminService) sendAuthCodeForPw(r FindPwRequest) (string, error) 
 
 		if err := service.db.Where("email = ? AND phone = ? AND role_id = ? ", r.Email, r.Phone, ADMINROLE).First(&model.User{}).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Println("-1")
 				return "", errors.New("-1") // 찾을수 없음
 			}
+			log.Println("db error3")
 			return "", errors.New("db error3")
 		}
 		//phone 인증번호 전송
 		code, err := sendCode(r.Phone)
 
 		if err != nil {
+			log.Println(err)
 			return "", err
 		}
 
 		if err := service.db.Create(&model.AuthCode{Phone: r.Phone, Code: code}).Error; err != nil {
+			log.Println("db error4")
 			return "", errors.New("db error4")
 		}
 	}
@@ -353,6 +388,7 @@ func (service *adminService) changePw(r FindPasswordRequest) (string, error) {
 	password := strings.TrimSpace(r.Password)
 
 	if password == "" {
+		log.Println("-2")
 		return "", errors.New("-2")
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.Password), bcrypt.DefaultCost)
@@ -365,14 +401,17 @@ func (service *adminService) changePw(r FindPasswordRequest) (string, error) {
 
 	if err := service.db.Where("( target = ? OR target = ? ) AND created_at >= ?", r.Phone, r.Email, threeMinutesAgo).Last(&model.VerifiedTarget{}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("-1")
 			return "", errors.New("-1") // 인증해야함
 		}
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
 	finalPassword := string(hashedPassword)
 
 	if err := service.db.Model(&model.User{}).Where("email = ?", r.Email).UpdateColumn("password", finalPassword).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 	return "200", nil
@@ -383,6 +422,7 @@ func (service *adminService) question(r QuestionRequest) (string, error) {
 	pattern := `^010\d{8}$`
 	matched, err := regexp.MatchString(pattern, r.Phone)
 	if err != nil || !matched {
+		log.Println("invalid phone")
 		return "", errors.New("invalid phone format, should be 01000000000")
 	}
 
@@ -391,11 +431,13 @@ func (service *adminService) question(r QuestionRequest) (string, error) {
 
 	//유효성 검증
 	if err := validate.Struct(r); err != nil {
+		log.Println(err)
 		return "", err
 	}
 
 	question := model.Question{Email: r.Email, Phone: r.Phone, Name: r.Name, PossibleTime: r.PossibleTime, EntryRoute: r.EntryRoute, HospitalName: r.HospitalName}
 	if err := service.db.Create(&question).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 

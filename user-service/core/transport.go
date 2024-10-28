@@ -440,7 +440,7 @@ func AppleCallbackHandler(endpoint endpoint.Endpoint) fiber.Handler {
 
 		// ID 토큰을 앱 딥 링크로 리다이렉트
 		appScheme := "myapp://callback" // 앱의 딥 링크 URI 스킴
-		redirectURL := fmt.Sprintf("%s?id_token=%s", appScheme, idToken)
+		redirectURL := fmt.Sprintf("%s?id_token=%s&code=%s", appScheme, idToken, code)
 
 		// 앱으로 리다이렉트 (302 리다이렉트)
 		return c.Redirect(redirectURL, fiber.StatusFound)

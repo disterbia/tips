@@ -65,10 +65,12 @@ type JWKS struct {
 
 func (service *userService) snsLogin(request LoginRequest) (string, error) {
 	if request.FCMToken == "" || request.DeviceID == "" {
+		log.Println("check")
 		return "", errors.New("check fcm_token,device_id")
 	}
 	iss, err := decodeJwt(request.IdToken)
 	if err != nil {
+		log.Println(err)
 		return "", err
 	}
 
@@ -78,16 +80,19 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 	if strings.Contains(iss, "kakao") { // 카카오
 		snsType = uint(KAKAO)
 		if email, err = kakaoLogin(request); err != nil {
+			log.Println(err)
 			return "", err
 		}
 	} else if strings.Contains(iss, "google") { // 구글
 		snsType = uint(GOOGLE)
 		if email, err = googleLogin(request); err != nil {
+			log.Println(err)
 			return "", err
 		}
 	} else if strings.Contains(iss, "apple") { // 애플
 		snsType = uint(APPLE)
 		if email, err = appleLogin(request); err != nil {
+			log.Println(err)
 			return "", err
 		}
 	}
@@ -102,6 +107,7 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					// 유효성 검사 수행
 					if err := validateSignIn(request); err != nil {
+						log.Println("-2")
 						return "", errors.New("-2")
 					}
 					now := time.Now()
@@ -109,13 +115,16 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 
 					if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, thirtyMinutesAgo).Last(&model.VerifiedTarget{}).Error; err != nil {
 						if errors.Is(err, gorm.ErrRecordNotFound) {
+							log.Println("-1")
 							return "", errors.New("-1") // 인증해야함
 						}
+						log.Println("db error")
 						return "", errors.New("db error")
 					}
 
 					birthday, err := time.Parse("2006-01-02", request.Birthday)
 					if err != nil {
+						log.Println("db error-2")
 						return "", errors.New("-2")
 					}
 
@@ -124,32 +133,40 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 					if err := service.db.Create(&user).Error; err != nil {
 						if strings.Contains(err.Error(), "duplicate") {
 							if err := service.db.Where("phone = ? ", request.Phone).First(&user).Error; err != nil {
+								log.Println("db error2")
 								return "", errors.New("db error2")
 							}
+							log.Println("snstype")
 							return "", errors.New(strconv.Itoa(int(user.SnsType))) // 이미 가입된 번호
 						}
+						log.Println("db error3")
 						return "", errors.New("db error3")
 					}
 				} else {
+					log.Println("db error4")
 					return "", errors.New("db error4")
 
 				}
 			} else {
 				// 있다면 해당 이메일의 uid로 조회
 				if err := service.db.Where("id = ?", linkedEmail.Uid).First(&user).Error; err != nil {
+					log.Println("db error5")
 					return "", errors.New("db error5")
 				}
 			}
 
 			if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
+				log.Println("db error6")
 				return "", errors.New("db error6")
 			}
 
 		} else {
+			log.Println("db error7")
 			return "", errors.New("db error7")
 		}
 	} else {
 		if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
+			log.Println("db error8")
 			return "", errors.New("db error8")
 		}
 	}
@@ -164,6 +181,7 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 
 func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error) {
 	if request.FCMToken == "" || request.DeviceID == "" {
+		log.Println("check")
 		return "", errors.New("check fcm_token,device_id")
 	}
 	now := time.Now()
@@ -172,12 +190,15 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 
 	if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, threeMinutesAgo).Last(&verify).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("-1")
 			return "", errors.New("-1") // 인증해야함
 		}
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
 	if err := service.db.Unscoped().Delete(&verify).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -188,28 +209,34 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 
 			// 유효성 검사 수행
 			if err := validatePhoneSignIn(request); err != nil {
+				log.Println("-2")
 				return "", errors.New("-2")
 			}
 
 			birthday, err := time.Parse("2006-01-02", request.Birthday)
 			if err != nil {
+				log.Println("-2")
 				return "", errors.New("-2")
 			}
 
 			user = model.User{Name: request.Name, DeviceID: request.DeviceID, FCMToken: request.FCMToken, Phone: request.Phone, Gender: request.Gender,
 				Birthday: birthday, UserType: request.UserType}
 			if err := service.db.Create(&user).Error; err != nil {
+				log.Println("db error3")
 				return "", errors.New("db error3")
 			}
 		} else {
+			log.Println("db error4")
 			return "", errors.New("db error4")
 		}
 	} else {
 		if user.SnsType != 0 {
+			log.Println("snstype")
 			return "", errors.New(strconv.Itoa(int(user.SnsType))) //이미 가입된 번호
 		}
 
 		if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
+			log.Println("db error4")
 			return "", errors.New("db error4")
 		}
 	}
@@ -217,6 +244,7 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 	// JWT 토큰 생성
 	tokenString, err := generateJWT(user)
 	if err != nil {
+		log.Println(err)
 		return "", err
 	}
 
@@ -226,11 +254,13 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 
 func (service *userService) autoLogin(request AutoLoginRequest) (string, error) {
 	if request.FcmToken == "" || request.DeviceId == "" {
+		log.Println("check")
 		return "", errors.New("check fcm_token,device_id")
 	}
 	// 데이터베이스에서 사용자 조회
 	var u model.User
 	if err := service.db.Where("id = ?", request.Id).First(&u).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	// 새로운 JWT 토큰 생성
@@ -240,6 +270,7 @@ func (service *userService) autoLogin(request AutoLoginRequest) (string, error) 
 	}
 
 	if err := service.db.Model(&u).Updates(model.User{FCMToken: request.FcmToken, DeviceID: request.DeviceId}).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 	return tokenString, nil
@@ -255,11 +286,13 @@ func (service *userService) sendAuthCodeForSingin(number string) (string, error)
 	result := service.db.Debug().Where("phone = ?", number).Find(&model.User{})
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 
 	} else if result.RowsAffected > 0 {
 		// 레코드가 존재할 때
+		log.Println("-1")
 		return "", errors.New("-1")
 	}
 
@@ -299,9 +332,11 @@ func (service *userService) verifyAuthCode(number, code string) (string, error) 
 	var authCode model.AuthCode
 
 	if err := service.db.Where("phone = ? AND created_at >= ? ", number, threeMinutesAgo).Last(&authCode).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	if authCode.Code != code {
+		log.Println("-1")
 		return "", errors.New("-1")
 	}
 
@@ -315,11 +350,13 @@ func (service *userService) verifyAuthCode(number, code string) (string, error) 
 
 	if err := tx.Where("phone = ?", authCode.Phone).Unscoped().Delete(&model.AuthCode{}).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error3")
 		return "", errors.New("db error3")
 	}
 
 	if err := tx.Create(&model.VerifiedTarget{Target: authCode.Phone}).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -332,17 +369,20 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 	// 유효성 검사 수행
 
 	if birth, err := validateDate(request.Birthday); err != nil {
+		log.Println(err)
 		return "", err
 	} else {
 		birtday = birth
 	}
 
 	if err := validateSignInForUpdate(request); err != nil {
+		log.Println(err)
 		return "", err
 	}
 
 	var user model.User
 	if err := service.db.Where("id= ? ", request.ID).First(&user).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	if user.Phone != request.Phone {
@@ -352,12 +392,15 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 
 		if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, threeMinutesAgo).Last(&verify).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Println("-1")
 				return "", errors.New("-1") // 인증해야함
 			}
+			log.Println("db error1")
 			return "", errors.New("db error1")
 		}
 
 		if err := service.db.Unscoped().Delete(&verify).Error; err != nil {
+			log.Println("db error2")
 			return "", errors.New("db error2")
 		}
 
@@ -460,7 +503,7 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 				}
 			}()
 		}
-
+		log.Println("db error3")
 		return "", errors.New("db error3")
 	}
 
@@ -475,6 +518,7 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 					deleteFromS3(image.Url, service.s3svc, service.bucket, service.bucketUrl)
 					deleteFromS3(image.ThumbnailUrl, service.s3svc, service.bucket, service.bucketUrl)
 				}()
+				log.Println("db error4")
 				return "", errors.New("db error4")
 			}
 
@@ -486,10 +530,12 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 					deleteFromS3(image.Url, service.s3svc, service.bucket, service.bucketUrl)
 					deleteFromS3(image.ThumbnailUrl, service.s3svc, service.bucket, service.bucketUrl)
 				}()
+				log.Println("db error5")
 				return "", errors.New("db error5")
 			}
 		case err := <-errorChan:
 			tx.Rollback()
+			log.Println(err)
 			return "", err
 		}
 	}
@@ -519,6 +565,7 @@ func (service *userService) linkEmail(uid uint, idToken string) (string, error) 
 		if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
 			email, ok := claims["email"].(string)
 			if !ok {
+				log.Println("claims")
 				return "", errors.New("email not found in token claims")
 			}
 			if err := saveLinkedEmail(uid, email, service, uint(KAKAO)); err != nil {
@@ -549,6 +596,7 @@ func (service *userService) linkEmail(uid uint, idToken string) (string, error) 
 		if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
 			email, ok := claims["email"].(string)
 			if !ok {
+				log.Println("claims")
 				return "", errors.New("email not found in token claims")
 			}
 			if err := saveLinkedEmail(uid, email, service, uint(APPLE)); err != nil {
@@ -556,6 +604,7 @@ func (service *userService) linkEmail(uid uint, idToken string) (string, error) 
 			}
 		}
 	} else {
+		log.Println("invalid")
 		return "", errors.New("invalid snsType")
 	}
 	return "200", nil
@@ -564,9 +613,11 @@ func (service *userService) linkEmail(uid uint, idToken string) (string, error) 
 func saveLinkedEmail(uid uint, email string, service *userService, snsType uint) error {
 	var user model.User
 	if err := service.db.Where("id = ? ", uid).First(&user).Error; err != nil {
+		log.Println("db error")
 		return errors.New("db error")
 	}
 	if *user.Email == email {
+		log.Println("wrong")
 		return errors.New("wrong request")
 	}
 
@@ -578,13 +629,16 @@ func saveLinkedEmail(uid uint, email string, service *userService, snsType uint)
 		// 레코드가 존재하지 않으면 새 레코드 생성
 		err := service.db.Create(&linkedEmail).Error
 		if err != nil {
+			log.Println("db erro2")
 			return errors.New("db error2")
 		}
 	} else if result.Error != nil {
+		log.Println("db error3")
 		return errors.New("db error3")
 	} else {
 		// 레코드가 존재하면 삭제
 		if err := service.db.Where(linkedEmail).Unscoped().Delete(&model.LinkedEmail{}).Error; err != nil {
+			log.Println("db error")
 			return errors.New("db error4")
 		}
 	}
@@ -597,6 +651,7 @@ func (service *userService) getUser(id uint) (UserResponse, error) {
 	result := service.db.Debug().Preload("ProfileImages", "type = ?", PROFILEIMAGETYPE).
 		Preload("LinkedEmails").First(&user, id)
 	if result.Error != nil {
+		log.Println("db error")
 		return UserResponse{}, errors.New("db error")
 	}
 
@@ -644,6 +699,7 @@ func (service *userService) getUser(id uint) (UserResponse, error) {
 
 func (service *userService) removeUser(id uint) (string, error) {
 	if err := service.db.Where("id = ?", id).Delete(&model.User{}).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	return "200", nil
@@ -652,6 +708,7 @@ func (service *userService) removeUser(id uint) (string, error) {
 func (service *userService) getVersion() (AppVersionResponse, error) {
 	var version model.AppVersion
 	if err := service.db.Last(&version).Error; err != nil {
+		log.Println("db error")
 		return AppVersionResponse{}, errors.New("db error")
 	}
 
@@ -662,6 +719,7 @@ func (service *userService) getVersion() (AppVersionResponse, error) {
 func (service *userService) getPolices() ([]PoliceResponse, error) {
 	var polices []model.Police
 	if err := service.db.Where("is_last = true").Find(&polices).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -718,6 +776,7 @@ func (s *userService) exchangeCodeForToken(code string) (*TokenResponse, error) 
 
 	// 응답 파싱
 	var tokenResponse TokenResponse
+	tokenResponse.Code = code
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResponse); err != nil {
 		return nil, err
 	}

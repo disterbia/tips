@@ -34,10 +34,12 @@ func (service *emotionService) saveEmotion(request EmotionRequest) (string, erro
 
 	if request.Symptoms != nil && len(request.Symptoms) != 0 {
 		if len(request.Symptoms) > 5 {
+			log.Println("invalid1")
 			return "", errors.New("invalid Symptoms")
 		}
 		for _, v := range request.Symptoms {
 			if v > 5 || v == 0 {
+				log.Println("invalid2")
 				return "", errors.New("invalid Symptoms")
 			}
 		}
@@ -45,6 +47,7 @@ func (service *emotionService) saveEmotion(request EmotionRequest) (string, erro
 
 	targetDate, err := time.Parse("2006-01-02", request.TargetDate)
 	if err != nil {
+		log.Println(err)
 		return "", errors.New("invalid TargetDate")
 	}
 
@@ -60,6 +63,7 @@ func (service *emotionService) saveEmotion(request EmotionRequest) (string, erro
 	var emotion model.Emotion
 	if err := tx.Where("target_date = ? AND uid = ? ", targetDate, request.Uid).Delete(&model.Emotion{}).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -71,6 +75,7 @@ func (service *emotionService) saveEmotion(request EmotionRequest) (string, erro
 
 	if err := tx.Create(&emotion).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 	tx.Commit()
@@ -87,6 +92,7 @@ func (service *emotionService) getEmotions(id uint, param GetEmotionsParams) ([]
 	var emotions []model.Emotion
 
 	if err := service.db.Where("uid = ? AND created_at >= ? AND created_at <= ? ", id, param.StartDate, param.EndDate+" 23:59:59").Find(&emotions).Order("id DESC").Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 

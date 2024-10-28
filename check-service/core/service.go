@@ -32,6 +32,7 @@ func (service *checkService) getSampleVideos() ([]SampleVideoResponse, error) {
 	var sampleVideoResponses []SampleVideoResponse
 
 	if err := service.db.Find(&sampleVideos).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -65,6 +66,7 @@ func (service *checkService) getFaceInfos(id uint, param GetFaceInfoParams) ([]F
 	}
 
 	if err := query.Find(&faceInfos).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -130,6 +132,7 @@ func (service *checkService) getTapBlinkScores(id uint, param GetTapBlinkScorePa
 	query = query.Order("id DESC")
 
 	if err := query.Find(&tapBlinkScores).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -170,6 +173,7 @@ func (service *checkService) saveFaceInfos(uid uint, request FaceInfoRequest) (s
 	for faceType := range request.FaceInfos {
 		if faceType > 5 || faceType == 0 {
 			tx.Rollback()
+			log.Println("check")
 			return "", errors.New("check face_type")
 		}
 		faceTypes = append(faceTypes, faceType)
@@ -179,6 +183,7 @@ func (service *checkService) saveFaceInfos(uid uint, request FaceInfoRequest) (s
 	if len(faceTypes) > 0 {
 		if err := tx.Where("created_at::date = ? AND uid = ? AND face_type IN (?)", targetDate, uid, faceTypes).Unscoped().Delete(&model.FaceInfo{}).Error; err != nil {
 			tx.Rollback()
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 	}
@@ -200,6 +205,7 @@ func (service *checkService) saveFaceInfos(uid uint, request FaceInfoRequest) (s
 
 	if err := tx.Create(&models).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 	tx.Commit()
@@ -212,6 +218,7 @@ func (service *checkService) saveTapBlinkScore(request TapBlinkRequest) (string,
 
 	//유효성 검증
 	if err := validate.Struct(request); err != nil {
+		log.Println(err)
 		return "", err
 	}
 
@@ -228,6 +235,7 @@ func (service *checkService) saveTapBlinkScore(request TapBlinkRequest) (string,
 
 	if err := tx.Where("created_at::date = ? AND uid = ? AND score_type=? ", targetDate, request.Uid, request.ScoreType).Unscoped().Delete(&model.TapBlinkScore{}).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -241,6 +249,7 @@ func (service *checkService) saveTapBlinkScore(request TapBlinkRequest) (string,
 
 	if err := tx.Create(&tapBlink).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 	tx.Commit()

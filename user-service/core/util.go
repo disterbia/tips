@@ -626,6 +626,7 @@ func GenerateClientSecret(keyID, teamID, clientID, privateKey string) (string, e
 	// PEM 포맷의 비공개 키 파싱
 	parsedKey, err := parsePrivateKey(privateKey)
 	if err != nil {
+		log.Println("parse")
 		return "", fmt.Errorf("failed to parse private key: %v", err)
 	}
 
@@ -638,6 +639,7 @@ func parsePrivateKey(privateKey string) (*ecdsa.PrivateKey, error) {
 	// PEM 블록 추출
 	block, _ := pem.Decode([]byte(privateKey))
 	if block == nil || block.Type != "PRIVATE KEY" {
+		log.Println("pem")
 		return nil, errors.New("invalid private key: not a valid PEM block")
 	}
 
@@ -650,6 +652,7 @@ func parsePrivateKey(privateKey string) (*ecdsa.PrivateKey, error) {
 	// 키 타입 확인 및 변환
 	ecPrivateKey, ok := parsedKey.(*ecdsa.PrivateKey)
 	if !ok {
+		log.Println("ecdsa")
 		return nil, errors.New("private key is not of type ECDSA")
 	}
 

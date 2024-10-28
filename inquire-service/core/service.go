@@ -40,11 +40,13 @@ func (service *inquireService) getMyInquires(id uint, page uint, startDate, endD
 
 	if startDate != "" {
 		if err := validateDate(startDate); err != nil {
+			log.Println(err)
 			return nil, err
 		}
 	}
 	if endDate != "" {
 		if err := validateDate(endDate); err != nil {
+			log.Println(err)
 			return nil, err
 		}
 	}
@@ -61,10 +63,9 @@ func (service *inquireService) getMyInquires(id uint, page uint, startDate, endD
 		query = query.Where("created_at <= ?", endDate+" 23:59:59")
 	}
 	query = query.Order("id DESC")
-	result := query.Offset(int(offset)).Limit(int(pageSize)).Preload("Replies").Find(&inquires)
-
-	if result.Error != nil {
-		return nil, result.Error
+	if err := query.Offset(int(offset)).Limit(int(pageSize)).Preload("Replies").Find(&inquires).Error; err != nil {
+		log.Println("db error")
+		return nil, errors.New("db error")
 	}
 
 	var inquireResponses []InquireResponse
@@ -100,10 +101,12 @@ func (service *inquireService) getAllInquires(id uint, page uint, startDate, end
 
 	var user model.User
 	if err := service.db.First(&user, id).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
 	if user.RoleID != uint(ADMINROLE) {
+		log.Println("admin")
 		return nil, errors.New("unauthorized: user is not an admin")
 	}
 
@@ -117,6 +120,7 @@ func (service *inquireService) getAllInquires(id uint, page uint, startDate, end
 	}
 	query = query.Order("id DESC")
 	if err := query.Preload("Replies").Find(&inquires).Error; err != nil {
+		log.Println("db error2")
 		return nil, errors.New("db error2")
 	}
 
@@ -151,6 +155,7 @@ func (service *inquireService) sendInquire(request InquireRequest) (string, erro
 	}
 
 	if err := service.db.Create(&inquire).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -161,18 +166,22 @@ func (service *inquireService) answerInquire(request InquireReplyRequest) (strin
 	var inquire model.Inquire
 
 	if err := service.db.Preload("User").First(&inquire, request.InquireId).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
 	if request.ReplyType { // true = 답변
 		if inquire.User.RoleID != uint(SUPERROLE) {
+			log.Println("useradmin")
 			return "", errors.New("unauthorized: user is not an admin")
 		}
 	} else { // 추가문의
 		if inquire.Uid != request.Uid {
+			log.Println("user")
 			return "", errors.New("unauthorized: illegal user")
 		}
 		if inquire.User.RoleID == uint(ADMINROLE) || inquire.User.RoleID == uint(SUPERROLE) {
+			log.Println("admin")
 			return "", errors.New("unauthorized: can't admin ")
 		}
 	}
@@ -187,6 +196,7 @@ func (service *inquireService) answerInquire(request InquireReplyRequest) (strin
 	tx := service.db.Begin()
 	if err := tx.Create(&inquireReply).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -215,6 +225,7 @@ func (service *inquireService) removeInquire(id uint, uid uint) (string, error) 
 
 	var inquire model.Inquire
 	if err := service.db.Where("id = ? AND uid = ?", id, uid).Delete(&inquire).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	return "200", nil
@@ -224,6 +235,7 @@ func (service *inquireService) removeReply(id uint, uid uint) (string, error) {
 
 	var inquireReply model.InquireReply
 	if err := service.db.Where("id = ? AND uid = ?", id, uid).Delete(&inquireReply).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 

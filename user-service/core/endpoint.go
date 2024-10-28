@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -143,6 +144,7 @@ func AppleCallbackEndpoint(s UserService) endpoint.Endpoint {
 		req := request.(AppleCallbackRequest)
 
 		if req.Code == "" {
+			log.Println("code")
 			return nil, errors.New("authorization code is missing")
 		}
 

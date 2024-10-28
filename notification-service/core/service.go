@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"log"
 	"notification-service/model"
 	"time"
 
@@ -29,6 +30,7 @@ func (service *notificationService) SaveNotifications(r NotificationRequest) (st
 	tx := service.db.Begin()
 	if err := tx.Where("parent_id = ? AND uid = ? AND type = ?", r.ParentID, r.Uid, r.Type).Unscoped().Delete(&model.Notification{}).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
@@ -52,6 +54,7 @@ func (service *notificationService) SaveNotifications(r NotificationRequest) (st
 
 	if err := tx.Create(&notifications).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -62,6 +65,7 @@ func (service *notificationService) SaveNotifications(r NotificationRequest) (st
 func (service *notificationService) RemoveNotifications(r NotificationRequest) (string, error) {
 
 	if err := service.db.Where("parent_id = ? AND uid = ? AND type = ?", r.ParentID, r.Uid, r.Type).Unscoped().Delete(&model.Notification{}).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	return "200", nil
@@ -71,6 +75,7 @@ func (service *notificationService) GetMessages(uid uint) ([]MessageResponse, er
 	var messages []model.Message
 	result := service.db.Where("uid = ? ", uid).Order("id DESC").Find(&messages)
 	if result.Error != nil {
+		log.Println(result.Error)
 		return nil, result.Error
 	}
 
@@ -85,6 +90,7 @@ func (service *notificationService) GetMessages(uid uint) ([]MessageResponse, er
 func (service *notificationService) ReadAll(uid uint) (string, error) {
 	result := service.db.Model(&model.Message{}).Where("uid = ?", uid).Select("is_read").Updates(map[string]interface{}{"is_read": true})
 	if result.Error != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	return "200", nil
@@ -95,6 +101,7 @@ func (service *notificationService) RemoveMessages(ids []uint, uid uint) (string
 	result := service.db.Where("id IN ? AND uid= ?", ids, uid).Delete(&model.Message{})
 
 	if result.Error != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	return "200", nil

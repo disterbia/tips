@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"medicine-service/model"
 	"sort"
 	"strings"
@@ -45,11 +46,13 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 
 	name := strings.TrimSpace(r.Name)
 	if utf8.RuneCountInString(name) > 10 || len(name) == 0 {
+		log.Println("validate")
 		return "", errors.New("validate name")
 	}
 
 	for _, v := range r.Weekdays {
 		if v > 6 {
+			log.Println("invalid")
 			return "", errors.New("validate weekdays")
 		}
 		weekdays = append(weekdays, v)
@@ -61,6 +64,7 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 	for _, v := range r.Times {
 		time, err := time.Parse("15:04", v)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("validate times")
 		}
 		times = append(times, time.Format("15:04"))
@@ -69,6 +73,7 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 	if r.StartAt != "" {
 		time, err := time.Parse("2006-01-02", r.StartAt)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("invalid date format, should be YYYY-MM-DD")
 		}
 		startAt = &time
@@ -76,18 +81,21 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 	if r.EndAt != "" {
 		time, err := time.Parse("2006-01-02", r.EndAt)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("invalid date format, should be YYYY-MM-DD")
 		}
 		endAt = &time
 	}
 
 	if r.Remaining == 0 || r.Dose == 0 {
+		log.Println("invalid")
 		return "", errors.New("invalid value")
 	}
 
 	var medicine model.Medicine
 	if err := service.db.Where("id = ? AND uid = ? ", r.Id, r.Uid).First(&medicine).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 	}
@@ -105,6 +113,7 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 	medicine.IsActive = r.IsActive
 
 	if err := service.db.Save(&medicine).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
@@ -126,10 +135,12 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 		}
 		eventData, err := json.Marshal(notificationRequest)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("json marshal error")
 		}
 
 		if err := service.nats.Publish("save-medicine", eventData); err != nil {
+			log.Println(err)
 			return "", errors.New("nats publish error")
 		}
 	} else {
@@ -140,10 +151,12 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 		}
 		eventData, err := json.Marshal(notificationRequest)
 		if err != nil {
+			log.Println(err)
 			return "", errors.New("json marshal error")
 		}
 
 		if err := service.nats.Publish("remove-medicine", eventData); err != nil {
+			log.Println(err)
 			return "", errors.New("nats publish error")
 		}
 	}
@@ -153,6 +166,7 @@ func (service *medicineService) saveMedicine(r MedicineRequest) (string, error) 
 
 func (service *medicineService) removeMedicine(id uint, uid uint) (string, error) {
 	if err := service.db.Where("id =? AND uid = ?", id, uid).Delete(&model.Medicine{}).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	notificationRequest := NotificationRequest{
@@ -162,10 +176,12 @@ func (service *medicineService) removeMedicine(id uint, uid uint) (string, error
 	}
 	eventData, err := json.Marshal(notificationRequest)
 	if err != nil {
+		log.Println(err)
 		return "", errors.New("json marshal error")
 	}
 
 	if err := service.nats.Publish("remove-medicine", eventData); err != nil {
+		log.Println(err)
 		return "", errors.New("nats publish error")
 	}
 	// nats removeNotifications
@@ -178,12 +194,14 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 
 	// 1. 사용자의 정보를 데이터베이스에서 가져옵니다.
 	if err := service.db.Where("id = ?", uid).First(&user).Error; err != nil {
+		log.Println("db error1")
 		return nil, errors.New("db error")
 	}
 
 	// 2. 사용자의 의약품 리스트를 데이터베이스에서 가져옵니다.
 	var medicines []model.Medicine
 	if err := service.db.Where("uid = ? AND is_active = true", uid).Find(&medicines).Error; err != nil {
+		log.Println("db error2")
 		return nil, errors.New("db error")
 	}
 
@@ -192,6 +210,7 @@ func (service *medicineService) getExpects(uid uint) ([]MedicineTakeResponse, er
 	if err := service.db.Where("uid = ?", uid).Preload("Medicine", func(db *gorm.DB) *gorm.DB {
 		return db.Unscoped()
 	}).Find(&medicineTakes).Error; err != nil {
+		log.Println("db error3")
 		return nil, errors.New("db error")
 	}
 
@@ -356,6 +375,7 @@ func (service *medicineService) getMedicines(id uint) ([]MedicineResponse, error
 	var medicines []model.Medicine
 
 	if err := service.db.Where("uid = ?", id).Find(&medicines).Error; err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -386,11 +406,13 @@ func (service *medicineService) takeMedicine(request TakeMedicine) (string, erro
 
 	_, err := time.Parse("15:04", request.TimeTaken)
 	if err != nil {
+		log.Println("invalid time format, should be HH:MM")
 		return "", errors.New("invalid time format, should be HH:MM")
 	}
 
 	dateTaken, err := time.Parse("2006-01-02", request.DateTaken)
 	if err != nil {
+		log.Println("invalid date format, should be YYYY-MM-DD")
 		return "", errors.New("invalid date format, should be YYYY-MM-DD")
 	}
 
@@ -398,18 +420,22 @@ func (service *medicineService) takeMedicine(request TakeMedicine) (string, erro
 		request.MedicineId, request.Uid, dateTaken, request.TimeTaken).First(&medicineTake)
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			log.Println("db error")
 			return "", errors.New("db error")
 		}
 	}
 	if result.RowsAffected != 0 {
+		log.Println("already taken")
 		return "", errors.New("already taken")
 	}
 
 	if err := service.db.Where("id = ?", request.MedicineId).First(&medicine).Error; err != nil {
+		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
 
 	if request.Dose > medicine.Remaining {
+		log.Println("over")
 		return "", errors.New("over remaining")
 	}
 
@@ -417,6 +443,7 @@ func (service *medicineService) takeMedicine(request TakeMedicine) (string, erro
 
 	if err := tx.Model(&medicine).UpdateColumn("remaining", medicine.Remaining-request.Dose).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error3")
 		return "", errors.New("db error3")
 	}
 
@@ -424,6 +451,7 @@ func (service *medicineService) takeMedicine(request TakeMedicine) (string, erro
 
 	if err := tx.Create(&medicineTake).Error; err != nil {
 		tx.Rollback()
+		log.Println("db error4")
 		return "", errors.New("db error4")
 	}
 
@@ -437,6 +465,7 @@ func (service *medicineService) unTakeMedicine(id, uid uint) (string, error) {
 	var medicine model.Medicine
 
 	if err := service.db.Where("id = ? AND uid = ?", id, uid).First(&medicineTake).Error; err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 	tx := service.db.Begin()
@@ -444,12 +473,14 @@ func (service *medicineService) unTakeMedicine(id, uid uint) (string, error) {
 	result := tx.Where("id = ? AND uid = ?", id, uid).Unscoped().Delete(&model.MedicineTake{})
 	if result.Error != nil {
 		tx.Rollback()
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
 	if result.RowsAffected != 0 {
 		if err := tx.Model(&medicine).Where("id = ?", medicineTake.MedicineID).UpdateColumn("remaining", gorm.Expr("remaining + ?", medicineTake.Dose)).Error; err != nil {
 			tx.Rollback()
+			log.Println("db error2")
 			return "", errors.New("db error2")
 		}
 	}
@@ -463,6 +494,7 @@ func (service *medicineService) searchMedicines(keyword string) ([]string, error
 	var names []string
 	err := service.db.Model(&model.MedicineSearch{}).Where("name LIKE ?", "%"+keyword+"%").Pluck("name", &names).Error
 	if err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 	return names, nil

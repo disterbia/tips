@@ -30,10 +30,12 @@ func (service *adminVideoService) getLevel1s(id uint) ([]VimeoLevel1, error) {
 	var user model.User
 	err := service.db.Where("id = ?", id).Find(&user).Error
 	if err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
 	if user.RoleID != uint(SUPERROLE) {
+		log.Println("deny")
 		return nil, errors.New("deny")
 	}
 
@@ -45,6 +47,7 @@ func (service *adminVideoService) getLevel1s(id uint) ([]VimeoLevel1, error) {
 	// 요청 생성
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
+		log.Println(err)
 		return nil, err // 에러 반환
 	}
 
@@ -93,10 +96,12 @@ func (service *adminVideoService) getLevel2s(id uint, projectId string) ([]Vimeo
 	var user model.User
 	err := service.db.Where("id = ?", id).Find(&user).Error
 	if err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
 	if user.RoleID != uint(SUPERROLE) {
+		log.Println("deny")
 		return nil, errors.New("deny")
 	}
 
@@ -138,6 +143,7 @@ func (service *adminVideoService) getLevel2s(id uint, projectId string) ([]Vimeo
 	var videos []model.Video
 	err = service.db.Where("project_id = ?", projectId).Find(&videos).Error
 	if err != nil {
+		log.Println("db error")
 		return nil, errors.New("db error")
 	}
 
@@ -167,10 +173,12 @@ func (service *adminVideoService) saveVideos(videoData VideoData) (string, error
 	var user model.User
 	err := service.db.Where("id = ?", videoData.Id).Find(&user).Error
 	if err != nil {
+		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
 	if user.RoleID != uint(SUPERROLE) {
+		log.Println("deny")
 		return "", errors.New("deny")
 	}
 
@@ -258,11 +266,13 @@ func (service *adminVideoService) saveVideos(videoData VideoData) (string, error
 
 	if len(proIds) > 0 {
 		if err := service.db.Where("project_id IN ?", proIds).Delete(&model.Video{}).Error; err != nil {
+			log.Println("db error2")
 			return "", errors.New("db error2")
 		}
 
 		if len(videos) > 0 {
 			if err := service.db.Create(&videos).Error; err != nil {
+				log.Println("db error3")
 				return "", errors.New("db error3")
 			}
 		}
@@ -271,6 +281,7 @@ func (service *adminVideoService) saveVideos(videoData VideoData) (string, error
 	// 해제된 비디오 처리
 	if len(deselectedVideos) > 0 {
 		if err := service.db.Where("video_id IN ?", deselectedVideos).Delete(&model.Video{}).Error; err != nil {
+			log.Println("db error4")
 			return "", errors.New("db error4")
 		}
 	}

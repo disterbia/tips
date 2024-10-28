@@ -25,6 +25,7 @@ func verifyJWT(c *fiber.Ctx) (uint, error) {
 	// 헤더에서 JWT 토큰 추출
 	tokenString := c.Get("Authorization")
 	if tokenString == "" {
+		log.Println("required")
 		return 0, errors.New("authorization header is required")
 	}
 
@@ -37,6 +38,7 @@ func verifyJWT(c *fiber.Ctx) (uint, error) {
 	})
 
 	if err != nil || !token.Valid {
+		log.Println("invalidtoken")
 		return 0, errors.New("invalid token")
 	}
 
@@ -65,6 +67,7 @@ func validatePhoneNumber(phone string) error {
 	pattern := `^010\d{8}$`
 	matched, err := regexp.MatchString(pattern, phone)
 	if err != nil || !matched {
+		log.Println("invalid format")
 		return errors.New("invalid phone format, should be 01000000000")
 	}
 	return nil
@@ -106,22 +109,26 @@ func sendCode(number string) (string, error) {
 func validateSignIn(request SignInRequest) error {
 	// 빈 문자열 검사
 	if request.Email == "" || len(request.Email) > 50 || strings.Contains(request.Email, " ") {
+		log.Println("invalid1")
 		return errors.New("invalid email format")
 	}
 
 	// 이메일 검증을 위한 정규 표현식
 	emailRegex := regexp.MustCompile(`^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$`)
 	if !emailRegex.MatchString(request.Email) {
+		log.Println("invalid2")
 		return errors.New("invalid email format")
 	}
 
 	name := strings.TrimSpace(request.Name)
 	if utf8.RuneCountInString(name) > 5 || len(name) == 0 {
+		log.Println("invalid3")
 		return errors.New("invalid name")
 	}
 
 	major := strings.TrimSpace(request.Major)
 	if len(major) == 0 {
+		log.Println("invalid4")
 		return errors.New("invalid major")
 	}
 
