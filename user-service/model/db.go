@@ -33,6 +33,6 @@ func NewDB(dataSourceName string) (*gorm.DB, error) {
 	// 2. 조건부 인덱스를 생성: DeletedAt이 NULL인 경우에만 유니크 적용
 	db.Exec("CREATE UNIQUE INDEX unique_email_on_users ON users (email) WHERE deleted_at IS NULL;")
 
-	db.AutoMigrate(&AppVersion{}, &AuthCode{}, &Image{}, &LinkedEmail{}, &User{}, &VerifiedTarget{}, &Police{})
+	db.AutoMigrate(&AppVersion{}, &AuthCode{}, &Image{}, &LinkedEmail{}, &User{}, &VerifiedTarget{}, &Police{}, &UserPolice{})
 	return db, nil
 }
