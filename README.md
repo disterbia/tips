@@ -78,6 +78,7 @@ server {
     }
 }
 
+
 인증서 갱신 : 
 
 sudo systemctl stop nginx
@@ -85,3 +86,42 @@ sudo certbot renew --dry-run
 sudo nginx -t
 sudo systemctl restart nginx
 sudo certbot renew --webroot -w /var/www/html
+
+랜딩페이지 :
+ sudo chown -R ubuntu:ubuntu /var/www/flutterweb
+ $ sudo chmod -R 755 /var/www/flutterweb
+
+ scp -i /Users/admin/Desktop/wellkinson.pem -r web/* ubuntu@43.203.141.35:/var/www/flutterweb
+
+server {
+    listen 80;
+    server_name wellkinson.kr;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name wellkinson.kr;
+
+    ssl_certificate /etc/letsencrypt/live/wellkinson.kr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/wellkinson.kr/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    root /var/www/flutterweb;
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+}
+
+

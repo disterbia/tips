@@ -142,6 +142,28 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 						log.Println("db error3")
 						return "", errors.New("db error3")
 					}
+
+					if len(request.PoliceTypes) != 0 {
+						var polices []model.Police
+						var userPolices []model.UserPolice
+						if err := service.db.Where("id IN ? AND is_essential = ?", request.PoliceTypes, false).Find(&polices).Error; err != nil {
+							if !errors.Is(err, gorm.ErrRecordNotFound) {
+								log.Println("db error9")
+								return "", errors.New("db error9")
+							}
+						}
+						if len(polices) != 0 {
+							for _, v := range polices {
+								userPolices = append(userPolices, model.UserPolice{Uid: user.ID, PoliceId: v.ID})
+							}
+							if err := service.db.Create(&userPolices).Error; err != nil {
+								log.Println("db error10")
+								return "", errors.New("db error10")
+							}
+
+						}
+					}
+
 				} else {
 					log.Println("db error4")
 					return "", errors.New("db error4")
@@ -184,9 +206,31 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 		log.Println("check")
 		return "", errors.New("check fcm_token,device_id")
 	}
+
 	now := time.Now()
 	threeMinutesAgo := now.Add(-3 * time.Minute)
+	var user model.User
 	var verify model.VerifiedTarget
+
+	//심사
+	// if request.Phone == "01012345678" {
+	// 	if err := service.db.Where("phone = ? ", request.Phone).First(&user).Error; err != nil {
+	// 		log.Println("db error4")
+	// 		return "", errors.New("db error4")
+	// 	}
+	// 	if err := service.db.Model(&user).Updates(model.User{FCMToken: request.FCMToken, DeviceID: request.DeviceID}).Error; err != nil {
+	// 		log.Println("db error4")
+	// 		return "", errors.New("db error4")
+	// 	}
+	// 	// JWT 토큰 생성
+	// 	tokenString, err := generateJWT(user)
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		return "", err
+	// 	}
+
+	// 	return tokenString, nil
+	// }
 
 	if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, threeMinutesAgo).Last(&verify).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -201,8 +245,6 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
-
-	var user model.User
 
 	if err := service.db.Where("phone = ? ", request.Phone).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -224,6 +266,26 @@ func (service *userService) phoneLogin(request PhoneLoginRequest) (string, error
 			if err := service.db.Create(&user).Error; err != nil {
 				log.Println("db error3")
 				return "", errors.New("db error3")
+			}
+			if len(request.PoliceTypes) != 0 {
+				var polices []model.Police
+				var userPolices []model.UserPolice
+				if err := service.db.Where("id IN ? AND is_essential = ?", request.PoliceTypes, false).Find(&polices).Error; err != nil {
+					if !errors.Is(err, gorm.ErrRecordNotFound) {
+						log.Println("db error9")
+						return "", errors.New("db error9")
+					}
+				}
+				if len(polices) != 0 {
+					for _, v := range polices {
+						userPolices = append(userPolices, model.UserPolice{Uid: user.ID, PoliceId: v.ID})
+					}
+					if err := service.db.Create(&userPolices).Error; err != nil {
+						log.Println("db error10")
+						return "", errors.New("db error10")
+					}
+
+				}
 			}
 		} else {
 			log.Println("db error4")
@@ -310,6 +372,11 @@ func (service *userService) sendAuthCodeForSingin(number string) (string, error)
 
 func (service *userService) sendAuthCodeForLogin(number string) (string, error) {
 
+	//심사
+	// if number == "01012345678" {
+	// 	return "200", nil
+	// }
+
 	if err := validatePhoneNumber(number); err != nil {
 		return "", err
 	}
@@ -327,6 +394,11 @@ func (service *userService) sendAuthCodeForLogin(number string) (string, error) 
 }
 
 func (service *userService) verifyAuthCode(number, code string) (string, error) {
+	//심사
+	// if code == "123456" {
+	// 	return "200", nil
+	// }
+
 	now := time.Now()
 	threeMinutesAgo := now.Add(-3 * time.Minute)
 	var authCode model.AuthCode
@@ -491,27 +563,48 @@ func (service *userService) updateUser(request UserRequest) (string, error) {
 	if err := tx.Save(&user).Error; err != nil {
 		log.Println(err.Error())
 		tx.Rollback()
-		if request.ProfileImage != "" {
-			// 이미 업로드된 파일들을 S3에서 삭제
-			go func() {
-				select {
-				case image := <-imageChan:
-					deleteFromS3(image.Url, service.s3svc, service.bucket, service.bucketUrl)
-					deleteFromS3(image.ThumbnailUrl, service.s3svc, service.bucket, service.bucketUrl)
-				case <-errorChan:
-					log.Println(err)
-				}
-			}()
-		}
+		handleS3Deletion(request.ProfileImage, imageChan, errorChan, service)
 		log.Println("db error3")
 		return "", errors.New("db error3")
+	}
+
+	//선택동의 업데이트
+	var polices []model.Police
+	var userPolices []model.UserPolice
+
+	if err := tx.Where("uid = ?", request.ID).Unscoped().Delete(&model.UserPolice{}).Error; err != nil {
+		log.Println("db error7")
+		tx.Rollback()
+		handleS3Deletion(request.ProfileImage, imageChan, errorChan, service)
+		return "", errors.New("db error7")
+	}
+	if len(request.PoliceTypes) != 0 {
+		if err := tx.Where("id IN ? AND is_essential = ?", request.PoliceTypes, false).Find(&polices).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Println("db error9")
+				tx.Rollback()
+				handleS3Deletion(request.ProfileImage, imageChan, errorChan, service)
+				return "", errors.New("db error9")
+			}
+		}
+		if len(polices) != 0 {
+			for _, v := range polices {
+				userPolices = append(userPolices, model.UserPolice{Uid: user.ID, PoliceId: v.ID})
+			}
+			if err := tx.Create(&userPolices).Error; err != nil {
+				log.Println("db error8")
+				tx.Rollback()
+				handleS3Deletion(request.ProfileImage, imageChan, errorChan, service)
+				return "", errors.New("db error8")
+			}
+		}
 	}
 
 	if request.ProfileImage != "" {
 		select {
 		case image := <-imageChan:
 			// 기존 이미지 레코드 논리삭제
-			if err := service.db.Debug().Where("parent_id = ? AND type =?", user.ID, PROFILEIMAGETYPE).Delete(&model.Image{}).Error; err != nil {
+			if err := tx.Debug().Where("parent_id = ? AND type =?", user.ID, PROFILEIMAGETYPE).Delete(&model.Image{}).Error; err != nil {
 				log.Println(err.Error())
 				tx.Rollback()
 				go func() {
@@ -649,7 +742,7 @@ func saveLinkedEmail(uid uint, email string, service *userService, snsType uint)
 func (service *userService) getUser(id uint) (UserResponse, error) {
 	var user model.User
 	result := service.db.Debug().Preload("ProfileImages", "type = ?", PROFILEIMAGETYPE).
-		Preload("LinkedEmails").First(&user, id)
+		Preload("LinkedEmails").Preload("UserPolices").First(&user, id)
 	if result.Error != nil {
 		log.Println("db error")
 		return UserResponse{}, errors.New("db error")
@@ -685,6 +778,11 @@ func (service *userService) getUser(id uint) (UserResponse, error) {
 		linkedEmail := LinkedResponse{SnsType: v.SnsType, Email: v.Email}
 		linkedEmails = append(linkedEmails, linkedEmail)
 	}
+	var userPolices []uint
+	for _, v := range user.UserPolices {
+		userPolices = append(userPolices, v.PoliceId)
+	}
+
 	userResponse.Birthday = user.Birthday.Format("2006-01-02")
 	userResponse.Gender = user.Gender
 	userResponse.Name = user.Name
@@ -693,6 +791,7 @@ func (service *userService) getUser(id uint) (UserResponse, error) {
 	userResponse.LinkedEmails = linkedEmails
 	userResponse.CreatedAt = user.CreatedAt.Format("2006-01-02")
 	userResponse.UserType = user.UserType
+	userResponse.PoliceTypes = userPolices
 
 	return userResponse, nil
 }
@@ -718,7 +817,7 @@ func (service *userService) getVersion() (AppVersionResponse, error) {
 
 func (service *userService) getPolices() ([]PoliceResponse, error) {
 	var polices []model.Police
-	if err := service.db.Where("is_last = true").Find(&polices).Error; err != nil {
+	if err := service.db.Order("id ASC").Find(&polices).Error; err != nil {
 		log.Println("db error")
 		return nil, errors.New("db error")
 	}
@@ -726,13 +825,13 @@ func (service *userService) getPolices() ([]PoliceResponse, error) {
 	var policeResponse []PoliceResponse
 
 	for _, v := range polices {
-		policeResponse = append(policeResponse, PoliceResponse{Title: v.Title, PoliceType: v.PoliceType, Body: v.Body})
+		policeResponse = append(policeResponse, PoliceResponse{Title: v.Title, PoliceType: v.ID, Body: v.Body, IsEssential: v.IsEssential})
 	}
 
 	return policeResponse, nil
 }
 
-// ExchangeCodeForToken은 애플 서버와 통신해 Authorization Code를 토큰으로 교환합니다.
+// ExchangeCodeForToken은 애플 서버와 통신해 Authorization Code를 토큰으로 교환.
 func (s *userService) exchangeCodeForToken(code string) (*TokenResponse, error) {
 	clientID := os.Getenv("APPLE_CLIENT_ID")
 	keyID := os.Getenv("APPLE_KEY_ID")

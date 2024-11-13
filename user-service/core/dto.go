@@ -1,24 +1,26 @@
 package core
 
 type LoginRequest struct {
-	IdToken  string `json:"id_token"`
-	DeviceID string `json:"device_id"`
-	FCMToken string `json:"fcm_token"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Birthday string `json:"birthday" example:"yyyy-mm-dd"`
-	Gender   bool   `json:"gender"`
-	UserType uint   `json:"user_type"`
+	IdToken     string `json:"id_token"`
+	DeviceID    string `json:"device_id"`
+	FCMToken    string `json:"fcm_token"`
+	Name        string `json:"name"`
+	Phone       string `json:"phone"`
+	Birthday    string `json:"birthday" example:"yyyy-mm-dd"`
+	Gender      bool   `json:"gender"`
+	UserType    uint   `json:"user_type"`
+	PoliceTypes []uint `json:"police_types"`
 }
 
 type PhoneLoginRequest struct {
-	Phone    string `json:"phone"`
-	DeviceID string `json:"device_id"`
-	FCMToken string `json:"fcm_token"`
-	Name     string `json:"name"`
-	Birthday string `json:"birthday" example:"yyyy-mm-dd"`
-	Gender   bool   `json:"gender"`
-	UserType uint   `json:"user_type"`
+	Phone       string `json:"phone"`
+	DeviceID    string `json:"device_id"`
+	FCMToken    string `json:"fcm_token"`
+	Name        string `json:"name"`
+	Birthday    string `json:"birthday" example:"yyyy-mm-dd"`
+	Gender      bool   `json:"gender"`
+	UserType    uint   `json:"user_type"`
+	PoliceTypes []uint `json:"police_types"`
 }
 
 type AutoLoginRequest struct {
@@ -45,6 +47,7 @@ type UserRequest struct {
 	Gender       bool   `json:"gender"`
 	Birthday     string `json:"birthday" example:"yyyy-mm-dd"`
 	UserType     uint   `json:"user_type"`
+	PoliceTypes  []uint `json:"police_types"`
 }
 
 type UserResponse struct {
@@ -57,6 +60,7 @@ type UserResponse struct {
 	ProfileImage ImageResponse    `json:"profile_image"`
 	LinkedEmails []LinkedResponse `json:"linked_emails"`
 	UserType     uint             `json:"user_type"`
+	PoliceTypes  []uint           `json:"police_types"`
 }
 
 type ImageResponse struct {
@@ -81,9 +85,10 @@ type AppVersionResponse struct {
 }
 
 type PoliceResponse struct {
-	PoliceType uint   `json:"police_type"`
-	Title      string `json:"title"`
-	Body       string `json:"body"`
+	PoliceType  uint   `json:"police_type"`
+	Title       string `json:"title"`
+	Body        string `json:"body"`
+	IsEssential bool   `json:"is_essential"`
 }
 
 // AppleCallbackRequest는 Authorization Code를 담는 요청 구조체

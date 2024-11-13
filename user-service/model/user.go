@@ -19,4 +19,5 @@ type User struct {
 	UserType      uint
 	ProfileImages []Image       `gorm:"foreignKey:Uid"`
 	LinkedEmails  []LinkedEmail `gorm:"foreignkey:Uid"`
+	UserPolices   []UserPolice  `gorm:"foreignkey:Uid"`
 }

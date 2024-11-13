@@ -658,3 +658,20 @@ func parsePrivateKey(privateKey string) (*ecdsa.PrivateKey, error) {
 
 	return ecPrivateKey, nil
 }
+
+func handleS3Deletion(profileImage string, imageChan chan model.Image, errorChan chan error, service *userService) {
+	if profileImage == "" {
+		return
+	}
+
+	// 비동기로 S3 이미지 삭제 처리
+	go func() {
+		select {
+		case image := <-imageChan:
+			deleteFromS3(image.Url, service.s3svc, service.bucket, service.bucketUrl)
+			deleteFromS3(image.ThumbnailUrl, service.s3svc, service.bucket, service.bucketUrl)
+		case err := <-errorChan:
+			log.Println("S3 deletion error:", err)
+		}
+	}()
+}

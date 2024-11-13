@@ -6,8 +6,7 @@ import (
 
 type Police struct {
 	gorm.Model
-	Title      string
-	Body       string
-	PoliceType uint
-	IsLast     bool
+	Title       string
+	Body        string
+	IsEssential bool
 }
