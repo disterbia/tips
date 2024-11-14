@@ -6,7 +6,6 @@ import (
 
 type Inquire struct {
 	gorm.Model
-	Id      uint
 	User    User `gorm:"foreignKey:Uid"`
 	Uid     uint
 	Email   string
