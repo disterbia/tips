@@ -146,6 +146,16 @@ func (service *inquireService) sendInquire(request InquireRequest) (string, erro
 	if err := validate.Struct(request); err != nil {
 		return "", err
 	}
+	var user model.User
+	if err := service.db.Where("id=?", request.Uid).First(&user).Error; err != nil {
+		log.Println("db error2")
+		return "", errors.New("db error2")
+	}
+
+	if user.RoleID == uint(ADMINROLE) {
+		log.Println("admin")
+		return "", errors.New("unauthorized: can't admin ")
+	}
 
 	inquire := model.Inquire{
 		Uid:     request.Uid,
@@ -164,23 +174,28 @@ func (service *inquireService) sendInquire(request InquireRequest) (string, erro
 
 func (service *inquireService) answerInquire(request InquireReplyRequest) (string, error) {
 	var inquire model.Inquire
-
-	if err := service.db.Preload("User").First(&inquire, request.InquireId).Error; err != nil {
+	var user model.User
+	if err := service.db.First(&inquire, request.InquireId).Error; err != nil {
 		log.Println("db error")
 		return "", errors.New("db error")
 	}
 
+	if err := service.db.Where("id = ?", request.Uid).First(&user).Error; err != nil {
+		log.Println("db error4")
+		return "", errors.New("db error2")
+	}
+
 	if request.ReplyType { // true = 답변
-		if inquire.User.RoleID != uint(SUPERROLE) {
-			log.Println("useradmin")
+		if user.RoleID != uint(ADMINROLE) {
+			log.Println("not admin")
 			return "", errors.New("unauthorized: user is not an admin")
 		}
 	} else { // 추가문의
 		if inquire.Uid != request.Uid {
-			log.Println("user")
+			log.Println("illegal user")
 			return "", errors.New("unauthorized: illegal user")
 		}
-		if inquire.User.RoleID == uint(ADMINROLE) || inquire.User.RoleID == uint(SUPERROLE) {
+		if user.RoleID == uint(ADMINROLE) {
 			log.Println("admin")
 			return "", errors.New("unauthorized: can't admin ")
 		}
@@ -196,8 +211,8 @@ func (service *inquireService) answerInquire(request InquireReplyRequest) (strin
 	tx := service.db.Begin()
 	if err := tx.Create(&inquireReply).Error; err != nil {
 		tx.Rollback()
-		log.Println("db error")
-		return "", errors.New("db error")
+		log.Println("db error3")
+		return "", errors.New("db error3")
 	}
 
 	reponse, err := service.emailClient.SendEmail(context.Background(), &pb.EmailRequest{
