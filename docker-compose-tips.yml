@@ -77,7 +77,7 @@ services:
     environment:
       - TZ=Asia/Seoul
   landing:
-    image: disterbia94/landing-service:latest
+    image: disterbia94/tips-landing-service:latest
     environment:
       - TZ=Asia/Seoul
 
