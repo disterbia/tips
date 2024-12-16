@@ -19,8 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EmailService_SendEmail_FullMethodName      = "/emailservice.EmailService/SendEmail"
-	EmailService_SendCodeEmail_FullMethodName  = "/emailservice.EmailService/SendCodeEmail"
 	EmailService_KldgaSendEmail_FullMethodName = "/emailservice.EmailService/KldgaSendEmail"
 )
 
@@ -28,8 +26,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EmailServiceClient interface {
-	SendEmail(ctx context.Context, in *EmailRequest, opts ...grpc.CallOption) (*EmailResponse, error)
-	SendCodeEmail(ctx context.Context, in *EmailCodeRequest, opts ...grpc.CallOption) (*EmailResponse, error)
 	KldgaSendEmail(ctx context.Context, in *KldgaEmailRequest, opts ...grpc.CallOption) (*EmailResponse, error)
 }
 
@@ -39,24 +35,6 @@ type emailServiceClient struct {
 
 func NewEmailServiceClient(cc grpc.ClientConnInterface) EmailServiceClient {
 	return &emailServiceClient{cc}
-}
-
-func (c *emailServiceClient) SendEmail(ctx context.Context, in *EmailRequest, opts ...grpc.CallOption) (*EmailResponse, error) {
-	out := new(EmailResponse)
-	err := c.cc.Invoke(ctx, EmailService_SendEmail_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *emailServiceClient) SendCodeEmail(ctx context.Context, in *EmailCodeRequest, opts ...grpc.CallOption) (*EmailResponse, error) {
-	out := new(EmailResponse)
-	err := c.cc.Invoke(ctx, EmailService_SendCodeEmail_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *emailServiceClient) KldgaSendEmail(ctx context.Context, in *KldgaEmailRequest, opts ...grpc.CallOption) (*EmailResponse, error) {
@@ -72,8 +50,6 @@ func (c *emailServiceClient) KldgaSendEmail(ctx context.Context, in *KldgaEmailR
 // All implementations must embed UnimplementedEmailServiceServer
 // for forward compatibility
 type EmailServiceServer interface {
-	SendEmail(context.Context, *EmailRequest) (*EmailResponse, error)
-	SendCodeEmail(context.Context, *EmailCodeRequest) (*EmailResponse, error)
 	KldgaSendEmail(context.Context, *KldgaEmailRequest) (*EmailResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }
@@ -82,12 +58,6 @@ type EmailServiceServer interface {
 type UnimplementedEmailServiceServer struct {
 }
 
-func (UnimplementedEmailServiceServer) SendEmail(context.Context, *EmailRequest) (*EmailResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendEmail not implemented")
-}
-func (UnimplementedEmailServiceServer) SendCodeEmail(context.Context, *EmailCodeRequest) (*EmailResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendCodeEmail not implemented")
-}
 func (UnimplementedEmailServiceServer) KldgaSendEmail(context.Context, *KldgaEmailRequest) (*EmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KldgaSendEmail not implemented")
 }
@@ -102,42 +72,6 @@ type UnsafeEmailServiceServer interface {
 
 func RegisterEmailServiceServer(s grpc.ServiceRegistrar, srv EmailServiceServer) {
 	s.RegisterService(&EmailService_ServiceDesc, srv)
-}
-
-func _EmailService_SendEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EmailRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EmailServiceServer).SendEmail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EmailService_SendEmail_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EmailServiceServer).SendEmail(ctx, req.(*EmailRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EmailService_SendCodeEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EmailCodeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EmailServiceServer).SendCodeEmail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EmailService_SendCodeEmail_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EmailServiceServer).SendCodeEmail(ctx, req.(*EmailCodeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _EmailService_KldgaSendEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -165,14 +99,6 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "emailservice.EmailService",
 	HandlerType: (*EmailServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SendEmail",
-			Handler:    _EmailService_SendEmail_Handler,
-		},
-		{
-			MethodName: "SendCodeEmail",
-			Handler:    _EmailService_SendCodeEmail_Handler,
-		},
 		{
 			MethodName: "KldgaSendEmail",
 			Handler:    _EmailService_KldgaSendEmail_Handler,

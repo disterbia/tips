@@ -22,6 +22,7 @@ services:
       - video
       - admin
       - check
+      - landing
     
   inquire:
     image: disterbia94/tips-inquire-service:latest
@@ -73,6 +74,10 @@ services:
       - TZ=Asia/Seoul
   check:
     image: disterbia94/tips-check-service:latest
+    environment:
+      - TZ=Asia/Seoul
+  landing:
+    image: disterbia94/landing-service:latest
     environment:
       - TZ=Asia/Seoul
 

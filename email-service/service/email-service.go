@@ -11,8 +11,6 @@ import (
 	pb "email-service/proto"
 )
 
-// 필요한 import 선언
-
 type EmailServer struct {
 	pb.UnimplementedEmailServiceServer
 }
@@ -76,6 +74,40 @@ func (s *EmailServer) SendCodeEmail(ctx context.Context, req *pb.EmailCodeReques
 
 	// 이메일 전송
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, email, []string{req.Email}, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.EmailResponse{Status: "Success"}, nil
+}
+
+func (s *EmailServer) KldgaSendEmail(ctx context.Context, req *pb.KldgaEmailRequest) (*pb.EmailResponse, error) {
+	// SMTP 설정
+	email := os.Getenv("WELLKINSON_SMTP_EMAIL")
+	password := os.Getenv("WELLKINSON_SMTP_PASSWORD")
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	// 인증 정보
+	auth := smtp.PlainAuth("", email, password, smtpHost)
+
+	// 이메일 본문 구성
+	body := fmt.Sprintf(
+		"<h1>아래와 같은 문의가 등록되었습니다.<h1><br>"+
+			"<h2>이름: </h2><span>%s</span><br>"+
+			"<h2>이메일: </h2><span>%s</span><br>"+
+			"<h2>휴대번호: </h2><span>%s</span><br>"+
+			"<h2>내용: </h2><span>%s</span><br>",
+		req.Name, req.Email, req.Phone, req.Content)
+
+	// 이메일 메시지 설정
+	msg := []byte("To: disterbia@naver.com\r\n" +
+		"Subject: kldga 문의등록 알림\r\n" +
+		"Content-Type: text/html; charset=UTF-8\r\n" +
+		"\r\n" + body)
+
+	// 이메일 전송
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, email, []string{"disterbia@naver.com"}, msg)
 	if err != nil {
 		return nil, err
 	}

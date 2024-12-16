@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package emailservice;
+
+option go_package = "./";
+
+service EmailService {
+    rpc KldgaSendEmail (KldgaEmailRequest) returns (EmailResponse);
+}
+
+message EmailResponse {
+    string status = 1;
+}
+
+message KldgaEmailRequest {
+    string email = 1;
+    string name = 2;
+    string phone = 3;
+    string content = 4;
+}

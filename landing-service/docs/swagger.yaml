@@ -1,0 +1,65 @@
+definitions:
+  core.BasicResponse:
+    properties:
+      code:
+        type: string
+    type: object
+  core.ErrorResponse:
+    properties:
+      err:
+        description: wwwwww
+        type: string
+    type: object
+  core.KldgaRequest:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 50
+        type: string
+      phone:
+        maxLength: 11
+        type: string
+    required:
+    - content
+    - email
+    - name
+    - phone
+    type: object
+info:
+  contact: {}
+paths:
+  /kldga/inquire:
+    post:
+      consumes:
+      - application/json
+      description: 문의 등록시 호출
+      parameters:
+      - description: 요청 DTO - 문의데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/core.KldgaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공시 200 반환
+          schema:
+            $ref: '#/definitions/core.BasicResponse'
+        "400":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "500":
+          description: 요청 처리 실패시 오류 메시지 반환
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: kldga 문의하기
+      tags:
+      - 랜딩페이지 /landing
+swagger: "2.0"

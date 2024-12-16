@@ -83,6 +83,8 @@ func main() {
 	setupProxy(app, "/video/*", "http://video:44410")
 	setupProxy(app, "/check/*", "http://check:44411")
 
+	setupProxy(app, "/landing/*", "http://landing:44500")
+
 	// Swagger UI 프록시 설정
 	setupSwaggerUIProxy(app, "/admin-service/swagger/*", "http://admin:44400/swagger")
 	setupSwaggerUIProxy(app, "/emotion-service/swagger/*", "http://emotion:44404/swagger")
@@ -93,6 +95,7 @@ func main() {
 	setupSwaggerUIProxy(app, "/user-service/swagger/*", "http://user:44409/swagger")
 	setupSwaggerUIProxy(app, "/video-service/swagger/*", "http://video:44410/swagger")
 	setupSwaggerUIProxy(app, "/check-service/swagger/*", "http://check:44411/swagger")
+	setupSwaggerUIProxy(app, "/landing-service/swagger/*", "http://check:44500/swagger")
 
 	// Swagger JSON 파일 리다이렉트
 	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
@@ -119,8 +122,12 @@ func main() {
 
 		} else if strings.Contains(referer, "/admin-service/") {
 			return c.Redirect("/admin-service/swagger/doc.json")
+
 		} else if strings.Contains(referer, "/check-service/") {
 			return c.Redirect("/check-service/swagger/doc.json")
+
+		} else if strings.Contains(referer, "/landing-service/") {
+			return c.Redirect("/landing-service/swagger/doc.json")
 		}
 		return c.SendStatus(fiber.StatusNotFound)
 	})

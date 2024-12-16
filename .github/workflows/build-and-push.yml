@@ -32,6 +32,7 @@ jobs:
             video-service: 'video-service/**'
             admin-service: 'admin-service/**'
             check-service: 'check-service/**'
+            landing-service:'landing-service/**'
 
   build-and-push:
     needs: detect-changes
