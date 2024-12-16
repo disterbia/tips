@@ -56,7 +56,7 @@ func KldgaInquireHandler(endpoint endpoint.Endpoint) fiber.Handler {
 		if !limiter.Allow() {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "요청 횟수 초과"})
 		}
-		response, err := endpoint(c.Context(), nil)
+		response, err := endpoint(c.Context(), req)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}

@@ -8,8 +8,8 @@ import (
 
 func KldgaInquireEndpoint(s LandingService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		answer := request.(KldgaRequest)
-		code, err := s.kldgaInquire(answer)
+		inquire := request.(KldgaRequest)
+		code, err := s.kldgaInquire(inquire)
 		if err != nil {
 			return BasicResponse{Code: err.Error()}, err
 		}
