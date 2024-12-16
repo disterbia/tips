@@ -35,7 +35,7 @@ func (service *landingService) kldgaInquire(request KldgaRequest) (string, error
 		return "", errors.New("invalid phone format, should be 01000000000")
 	}
 	reponse, err := service.emailClient.KldgaSendEmail(context.Background(), &pb.KldgaEmailRequest{
-		Email:   request.Email,   // 받는 사람의 이메일
+		Email:   request.Email,   // 문의한 사람의 이메일
 		Name:    request.Name,    // 이름
 		Content: request.Content, // 문의 내용
 		Phone:   request.Phone,   // 휴대번호
