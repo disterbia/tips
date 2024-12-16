@@ -9,6 +9,7 @@ import (
 
 	pb "landing-service/proto"
 
+	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc"
 )
 
@@ -28,6 +29,14 @@ func NewLandingService(conn *grpc.ClientConn) LandingService {
 }
 
 func (service *landingService) kldgaInquire(request KldgaRequest) (string, error) {
+	// 유효성 검사기 생성
+	validate := validator.New()
+
+	//유효성 검증
+	if err := validate.Struct(request); err != nil {
+		return "", err
+	}
+
 	// 정규 표현식 패턴: 010으로 시작하며 총 11자리 숫자
 	pattern := `^010\d{8}$`
 	matched, err := regexp.MatchString(pattern, request.Phone)
