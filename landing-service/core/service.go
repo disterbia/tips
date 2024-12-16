@@ -52,7 +52,7 @@ func (service *landingService) kldgaInquire(request KldgaRequest) (string, error
 
 	if err != nil {
 		log.Printf("Failed to send email: %v", err)
-		return "", errors.New("failed to send email")
+		return "", errors.New("failed to send")
 	}
 
 	log.Printf("send email: %v", reponse)
