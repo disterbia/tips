@@ -1,4 +1,4 @@
-// /email-service/main.go
+// / /email-service/main.go
 package main
 
 import (
