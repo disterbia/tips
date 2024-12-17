@@ -2,7 +2,10 @@ version: '3.8'
 services:
   nats:
     image: nats:latest
-    
+
+  redis:
+    image: redis:latest
+
   gateway:
     image: disterbia94/tips-gateway:latest
     environment:
@@ -23,6 +26,7 @@ services:
       - admin
       - check
       - landing
+      - redis
     
   inquire:
     image: disterbia94/tips-inquire-service:latest

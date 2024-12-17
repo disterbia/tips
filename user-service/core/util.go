@@ -99,37 +99,6 @@ func decodeJwt(tokenString string) (string, error) {
 	}
 }
 
-// func copyStruct(src, dst interface{}) error {
-// 	srcVal := reflect.ValueOf(src)
-// 	dstVal := reflect.ValueOf(dst).Elem()
-
-// 	for i := 0; i < srcVal.NumField(); i++ {
-// 		srcField := srcVal.Field(i)
-// 		srcFieldName := srcVal.Type().Field(i).Name
-
-// 		dstField := dstVal.FieldByName(srcFieldName)
-// 		if dstField.IsValid() && dstField.Type() == srcField.Type() {
-// 			dstField.Set(srcField)
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-// func copyStruct(input interface{}, output interface{}) error {
-// 	jsonData, err := json.Marshal(input)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	err = json.Unmarshal(jsonData, output)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
 func validateTime(timeStr string) error {
 	if len(timeStr) != 5 {
 		return errors.New("invalid time format, should be HH:MM")

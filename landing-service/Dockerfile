@@ -33,6 +33,8 @@ WORKDIR /tips
 
 # 빌더 스테이지에서 생성된 실행 파일 복사
 COPY --from=builder /tips/landing-service .
+# .env 파일 복사 추가
+COPY --from=builder /tips/.env .
 # Swagger 문서 복사
 COPY --from=builder /tips/docs ./docs
 

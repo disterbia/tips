@@ -95,7 +95,8 @@ func main() {
 	setupSwaggerUIProxy(app, "/user-service/swagger/*", "http://user:44409/swagger")
 	setupSwaggerUIProxy(app, "/video-service/swagger/*", "http://video:44410/swagger")
 	setupSwaggerUIProxy(app, "/check-service/swagger/*", "http://check:44411/swagger")
-	setupSwaggerUIProxy(app, "/landing-service/swagger/*", "http://check:44500/swagger")
+
+	setupSwaggerUIProxy(app, "/landing-service/swagger/*", "http://landing:44500/swagger")
 
 	// Swagger JSON 파일 리다이렉트
 	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
