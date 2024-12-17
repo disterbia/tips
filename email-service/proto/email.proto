@@ -8,7 +8,7 @@ service EmailService {
     rpc SendEmail (EmailRequest) returns (EmailResponse);
     rpc SendCodeEmail (EmailCodeRequest) returns (EmailResponse);
     rpc KldgaSendEmail (KldgaEmailRequest) returns (EmailResponse);
-    rpc KldgaSendCompetitonEmail (KldgaCompetitionRequest) returns (EmailResponse);
+    rpc KldgaSendCompetitionEmail (KldgaCompetitionRequest) returns (EmailResponse);
 }
 
 message EmailRequest {

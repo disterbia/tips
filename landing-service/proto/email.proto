@@ -6,7 +6,7 @@ option go_package = "./";
 
 service EmailService {
     rpc KldgaSendEmail (KldgaEmailRequest) returns (EmailResponse);
-    rpc KldgaSendCompetitonEmail (KldgaCompetitionRequest) returns (EmailResponse);
+    rpc KldgaSendCompetitionEmail (KldgaCompetitionRequest) returns (EmailResponse);
 }
 
 message EmailResponse {

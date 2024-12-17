@@ -101,7 +101,7 @@ func (service *landingService) kldgaCompetition(request KldgaCompetitionRequest)
 		return "", errors.New("internal error")
 	}
 
-	reponse, err := service.emailClient.KldgaSendCompetitonEmail(context.Background(), &pb.KldgaCompetitionRequest{
+	reponse, err := service.emailClient.KldgaSendCompetitionEmail(context.Background(), &pb.KldgaCompetitionRequest{
 		Name:   request.Name,
 		Gender: int32(request.Gender),
 		League: request.League,

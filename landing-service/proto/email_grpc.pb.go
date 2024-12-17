@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EmailService_KldgaSendEmail_FullMethodName           = "/emailservice.EmailService/KldgaSendEmail"
-	EmailService_KldgaSendCompetitonEmail_FullMethodName = "/emailservice.EmailService/KldgaSendCompetitonEmail"
+	EmailService_KldgaSendEmail_FullMethodName            = "/emailservice.EmailService/KldgaSendEmail"
+	EmailService_KldgaSendCompetitionEmail_FullMethodName = "/emailservice.EmailService/KldgaSendCompetitionEmail"
 )
 
 // EmailServiceClient is the client API for EmailService service.
@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EmailServiceClient interface {
 	KldgaSendEmail(ctx context.Context, in *KldgaEmailRequest, opts ...grpc.CallOption) (*EmailResponse, error)
-	KldgaSendCompetitonEmail(ctx context.Context, in *KldgaCompetitionRequest, opts ...grpc.CallOption) (*EmailResponse, error)
+	KldgaSendCompetitionEmail(ctx context.Context, in *KldgaCompetitionRequest, opts ...grpc.CallOption) (*EmailResponse, error)
 }
 
 type emailServiceClient struct {
@@ -48,9 +48,9 @@ func (c *emailServiceClient) KldgaSendEmail(ctx context.Context, in *KldgaEmailR
 	return out, nil
 }
 
-func (c *emailServiceClient) KldgaSendCompetitonEmail(ctx context.Context, in *KldgaCompetitionRequest, opts ...grpc.CallOption) (*EmailResponse, error) {
+func (c *emailServiceClient) KldgaSendCompetitionEmail(ctx context.Context, in *KldgaCompetitionRequest, opts ...grpc.CallOption) (*EmailResponse, error) {
 	out := new(EmailResponse)
-	err := c.cc.Invoke(ctx, EmailService_KldgaSendCompetitonEmail_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, EmailService_KldgaSendCompetitionEmail_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (c *emailServiceClient) KldgaSendCompetitonEmail(ctx context.Context, in *K
 // for forward compatibility
 type EmailServiceServer interface {
 	KldgaSendEmail(context.Context, *KldgaEmailRequest) (*EmailResponse, error)
-	KldgaSendCompetitonEmail(context.Context, *KldgaCompetitionRequest) (*EmailResponse, error)
+	KldgaSendCompetitionEmail(context.Context, *KldgaCompetitionRequest) (*EmailResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }
 
@@ -73,8 +73,8 @@ type UnimplementedEmailServiceServer struct {
 func (UnimplementedEmailServiceServer) KldgaSendEmail(context.Context, *KldgaEmailRequest) (*EmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KldgaSendEmail not implemented")
 }
-func (UnimplementedEmailServiceServer) KldgaSendCompetitonEmail(context.Context, *KldgaCompetitionRequest) (*EmailResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method KldgaSendCompetitonEmail not implemented")
+func (UnimplementedEmailServiceServer) KldgaSendCompetitionEmail(context.Context, *KldgaCompetitionRequest) (*EmailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KldgaSendCompetitionEmail not implemented")
 }
 func (UnimplementedEmailServiceServer) mustEmbedUnimplementedEmailServiceServer() {}
 
@@ -107,20 +107,20 @@ func _EmailService_KldgaSendEmail_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EmailService_KldgaSendCompetitonEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EmailService_KldgaSendCompetitionEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(KldgaCompetitionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EmailServiceServer).KldgaSendCompetitonEmail(ctx, in)
+		return srv.(EmailServiceServer).KldgaSendCompetitionEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: EmailService_KldgaSendCompetitonEmail_FullMethodName,
+		FullMethod: EmailService_KldgaSendCompetitionEmail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EmailServiceServer).KldgaSendCompetitonEmail(ctx, req.(*KldgaCompetitionRequest))
+		return srv.(EmailServiceServer).KldgaSendCompetitionEmail(ctx, req.(*KldgaCompetitionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -137,8 +137,8 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EmailService_KldgaSendEmail_Handler,
 		},
 		{
-			MethodName: "KldgaSendCompetitonEmail",
-			Handler:    _EmailService_KldgaSendCompetitonEmail_Handler,
+			MethodName: "KldgaSendCompetitionEmail",
+			Handler:    _EmailService_KldgaSendCompetitionEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

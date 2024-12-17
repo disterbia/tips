@@ -13,7 +13,6 @@ type KldgaCompetitionRequest struct {
 	League string `json:"league" validate:"required,max=50"`
 	Career string `json:"career" validate:"required,max=50"`
 	Phone  string `json:"phone"  validate:"required,max=11"`
-	Code   string `json:"code"  validate:"required,max=6"`
 	Memo   string `json:"memo"  validate:"required,max=100"`
 }
 
