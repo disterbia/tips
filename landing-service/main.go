@@ -38,6 +38,7 @@ func main() {
 	// 서비스 생성
 	svc := core.NewLandingService(conn, redisClient)
 	kldgaInquireEndpoint := core.KldgaInquireEndpoint(svc)
+	kldgaCompetitionEndpoint := core.KldgaCompetitionEndpoint(svc)
 	sendAuthCodeEndpoint := core.SendAuthCodeEndpoint(svc)
 	verifyAuthCodeEndpoint := core.VerifyAuthCodeEndpoint(svc)
 
@@ -54,6 +55,7 @@ func main() {
 	app.Use(cors.New())
 
 	app.Post("/kldga/inquire", core.KldgaInquireHandler(kldgaInquireEndpoint))
+	app.Post("/kldga/competition", core.KldgaCompetitionHandler(kldgaCompetitionEndpoint))
 	app.Post("/kldga/send-code", core.SendAuthCodeHandler(sendAuthCodeEndpoint))
 	app.Post("/kldga/verify-code", core.VerifyAuthCodeHandler(verifyAuthCodeEndpoint))
 

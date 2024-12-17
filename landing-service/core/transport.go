@@ -80,7 +80,7 @@ func KldgaInquireHandler(endpoint endpoint.Endpoint) fiber.Handler {
 // @Success 200 {object} BasicResponse "성공시 200 반환"
 // @Failure 400 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
 // @Failure 500 {object} ErrorResponse "요청 처리 실패시 오류 메시지 반환"
-// @Router /kldga/inquire [post]
+// @Router /kldga/competition [post]
 func KldgaCompetitionHandler(endpoint endpoint.Endpoint) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 
