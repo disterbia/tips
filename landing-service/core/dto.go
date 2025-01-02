@@ -13,7 +13,16 @@ type KldgaCompetitionRequest struct {
 	League string `json:"league" validate:"required,max=50"`
 	Career string `json:"career" validate:"required,max=50"`
 	Phone  string `json:"phone"  validate:"required,max=11"`
-	Memo   string `json:"memo"  validate:"required,max=100"`
+	Memo   string `json:"memo"  validate:"max=100"`
+}
+
+type AdapfitInquireReqeust struct {
+	Name    string `json:"name" validate:"required,max=50"`
+	Email   string `json:"email" validate:"required,email"`
+	Phone   string `json:"phone"  validate:"required,max=11"`
+	Purpose string `json:"purpose"  validate:"required,max=1000"`
+	Career  string `json:"career" validate:"required,max=50"`
+	Content string `json:"content"  validate:"required,max=1000"`
 }
 
 type AuthCodeRequest struct {

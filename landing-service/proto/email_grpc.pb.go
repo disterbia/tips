@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	EmailService_KldgaSendEmail_FullMethodName            = "/emailservice.EmailService/KldgaSendEmail"
 	EmailService_KldgaSendCompetitionEmail_FullMethodName = "/emailservice.EmailService/KldgaSendCompetitionEmail"
+	EmailService_AdapfitInquire_FullMethodName            = "/emailservice.EmailService/AdapfitInquire"
 )
 
 // EmailServiceClient is the client API for EmailService service.
@@ -29,6 +30,7 @@ const (
 type EmailServiceClient interface {
 	KldgaSendEmail(ctx context.Context, in *KldgaEmailRequest, opts ...grpc.CallOption) (*EmailResponse, error)
 	KldgaSendCompetitionEmail(ctx context.Context, in *KldgaCompetitionRequest, opts ...grpc.CallOption) (*EmailResponse, error)
+	AdapfitInquire(ctx context.Context, in *AdapfitReqeust, opts ...grpc.CallOption) (*EmailResponse, error)
 }
 
 type emailServiceClient struct {
@@ -57,12 +59,22 @@ func (c *emailServiceClient) KldgaSendCompetitionEmail(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *emailServiceClient) AdapfitInquire(ctx context.Context, in *AdapfitReqeust, opts ...grpc.CallOption) (*EmailResponse, error) {
+	out := new(EmailResponse)
+	err := c.cc.Invoke(ctx, EmailService_AdapfitInquire_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EmailServiceServer is the server API for EmailService service.
 // All implementations must embed UnimplementedEmailServiceServer
 // for forward compatibility
 type EmailServiceServer interface {
 	KldgaSendEmail(context.Context, *KldgaEmailRequest) (*EmailResponse, error)
 	KldgaSendCompetitionEmail(context.Context, *KldgaCompetitionRequest) (*EmailResponse, error)
+	AdapfitInquire(context.Context, *AdapfitReqeust) (*EmailResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedEmailServiceServer) KldgaSendEmail(context.Context, *KldgaEma
 }
 func (UnimplementedEmailServiceServer) KldgaSendCompetitionEmail(context.Context, *KldgaCompetitionRequest) (*EmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KldgaSendCompetitionEmail not implemented")
+}
+func (UnimplementedEmailServiceServer) AdapfitInquire(context.Context, *AdapfitReqeust) (*EmailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdapfitInquire not implemented")
 }
 func (UnimplementedEmailServiceServer) mustEmbedUnimplementedEmailServiceServer() {}
 
@@ -125,6 +140,24 @@ func _EmailService_KldgaSendCompetitionEmail_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EmailService_AdapfitInquire_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdapfitReqeust)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).AdapfitInquire(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_AdapfitInquire_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).AdapfitInquire(ctx, req.(*AdapfitReqeust))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EmailService_ServiceDesc is the grpc.ServiceDesc for EmailService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "KldgaSendCompetitionEmail",
 			Handler:    _EmailService_KldgaSendCompetitionEmail_Handler,
+		},
+		{
+			MethodName: "AdapfitInquire",
+			Handler:    _EmailService_AdapfitInquire_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

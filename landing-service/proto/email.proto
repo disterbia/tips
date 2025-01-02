@@ -7,6 +7,7 @@ option go_package = "./";
 service EmailService {
     rpc KldgaSendEmail (KldgaEmailRequest) returns (EmailResponse);
     rpc KldgaSendCompetitionEmail (KldgaCompetitionRequest) returns (EmailResponse);
+    rpc AdapfitInquire (AdapfitReqeust) returns (EmailResponse);
 }
 
 message EmailResponse {
@@ -27,4 +28,13 @@ message KldgaCompetitionRequest {
     string career = 4;
     string phone = 5;
     string memo = 6;
+}
+
+message AdapfitReqeust {
+    string email = 1;
+    string name = 2;
+    string phone = 3;
+    string purpose = 4;
+    string career = 5;
+    string content = 6;
 }

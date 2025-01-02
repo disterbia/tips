@@ -41,6 +41,7 @@ func main() {
 	kldgaCompetitionEndpoint := core.KldgaCompetitionEndpoint(svc)
 	sendAuthCodeEndpoint := core.SendAuthCodeEndpoint(svc)
 	verifyAuthCodeEndpoint := core.VerifyAuthCodeEndpoint(svc)
+	adapfitInquireEndpoint := core.AdapfitInqruieEndpoint(svc)
 
 	app := fiber.New()
 	app.Use(logger.New())
@@ -58,6 +59,7 @@ func main() {
 	app.Post("/kldga/competition", core.KldgaCompetitionHandler(kldgaCompetitionEndpoint))
 	app.Post("/kldga/send-code", core.SendAuthCodeHandler(sendAuthCodeEndpoint))
 	app.Post("/kldga/verify-code", core.VerifyAuthCodeHandler(verifyAuthCodeEndpoint))
+	app.Post("/adapfit/inquire", core.AdapfitInquireHandler(adapfitInquireEndpoint))
 
 	log.Fatal(app.Listen(":44500"))
 

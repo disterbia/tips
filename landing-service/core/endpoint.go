@@ -28,6 +28,17 @@ func KldgaCompetitionEndpoint(s LandingService) endpoint.Endpoint {
 	}
 }
 
+func AdapfitInqruieEndpoint(s LandingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		inquire := request.(AdapfitInquireReqeust)
+		code, err := s.adapfitInquire(inquire)
+		if err != nil {
+			return BasicResponse{Code: err.Error()}, err
+		}
+		return BasicResponse{Code: code}, nil
+	}
+}
+
 // 인증번호 발송 엔드포인트
 func SendAuthCodeEndpoint(s LandingService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
