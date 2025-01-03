@@ -37,4 +37,5 @@ message AdapfitReqeust {
     string purpose = 4;
     string career = 5;
     string content = 6;
+    string class = 7;
 }

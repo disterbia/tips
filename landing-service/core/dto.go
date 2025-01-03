@@ -23,6 +23,7 @@ type AdapfitInquireReqeust struct {
 	Purpose string `json:"purpose"  validate:"required,max=1000"`
 	Career  string `json:"career" validate:"required,max=50"`
 	Content string `json:"content"  validate:"required,max=1000"`
+	Class   string `json:"class"  validate:"required,max=50"`
 }
 
 type AuthCodeRequest struct {

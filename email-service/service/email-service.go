@@ -305,9 +305,13 @@ func (s *EmailServer) AdapfitInquire(ctx context.Context, req *pb.AdapfitReqeust
         <!-- Content -->
         <div style="padding: 20px;">
             <div style="margin-bottom: 15px;">
-                <strong style="font-size: 16px; color: #4caf50;">이름:</strong>
+                <strong style="font-size: 16px; color: #4caf50;">소속명(이름):</strong>
                 <p style="margin: 0; font-size: 14px; color: #555;">%s</p>
             </div>
+			<div style="margin-bottom: 15px;">
+				<strong style="font-size: 16px; color: #4caf50;">소속 분류:</strong>
+				<p style="margin: 0; font-size: 14px; color: #555;">%s</p>
+			</div>
             <div style="margin-bottom: 15px;">
                 <strong style="font-size: 16px; color: #4caf50;">휴대전화 번호:</strong>
                 <p style="margin: 0; font-size: 14px; color: #555;">%s</p>
@@ -337,16 +341,16 @@ func (s *EmailServer) AdapfitInquire(ctx context.Context, req *pb.AdapfitReqeust
     </div>
 </body>
 </html>
-`, req.Name, req.Phone, req.Email, req.Purpose, req.Career, req.Content)
+`, req.Name, req.Class, req.Phone, req.Email, req.Purpose, req.Career, req.Content)
 
 	// 이메일 메시지 설정
-	msg := []byte("To: lab@adafpit.kr\r\n" +
+	msg := []byte("To: adapfitplus@haruharulab.com\r\n" +
 		"Subject: Apdatfit 장비 구매상담 알림\r\n" +
 		"Content-Type: text/html; charset=UTF-8\r\n" +
 		"\r\n" + body)
 
 	// 이메일 전송
-	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, email, []string{"lab@adapfit.kr"}, msg)
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, email, []string{"adapfitplus@haruharulab.com"}, msg)
 	if err != nil {
 		return nil, err
 	}

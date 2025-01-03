@@ -169,11 +169,15 @@ func (service *landingService) adapfitInquire(request AdapfitInquireReqeust) (st
 	if err != nil || !matched {
 		return "", errors.New("invalid phone format, should be 01000000000")
 	}
-	reponse, err := service.emailClient.KldgaSendEmail(context.Background(), &pb.KldgaEmailRequest{
-		Email:   request.Email,   // 문의한 사람의 이메일
-		Name:    request.Name,    // 이름
+	reponse, err := service.emailClient.AdapfitInquire(context.Background(), &pb.AdapfitReqeust{
+		Name:    request.Name, // 이름
+		Class:   request.Class,
+		Phone:   request.Phone, // 휴대번호
+		Email:   request.Email, // 문의한 사람의 이메일
+		Purpose: request.Purpose,
+		Career:  request.Career,
 		Content: request.Content, // 문의 내용
-		Phone:   request.Phone,   // 휴대번호
+
 	})
 
 	if err != nil {
