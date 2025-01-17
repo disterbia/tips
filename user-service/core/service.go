@@ -112,7 +112,6 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 					}
 					now := time.Now()
 					thirtyMinutesAgo := now.Add(-30 * time.Minute)
-
 					if err := service.db.Where("target = ? AND created_at >= ?", request.Phone, thirtyMinutesAgo).Last(&model.VerifiedTarget{}).Error; err != nil {
 						if errors.Is(err, gorm.ErrRecordNotFound) {
 							log.Println("-1")
@@ -163,7 +162,10 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 
 						}
 					}
-
+					if err := service.db.Unscoped().Where("target = ?", request.Phone).Delete(&model.VerifiedTarget{}); err != nil {
+						log.Println("db error9")
+						return "", errors.New("db error9")
+					}
 				} else {
 					log.Println("db error4")
 					return "", errors.New("db error4")
@@ -192,12 +194,12 @@ func (service *userService) snsLogin(request LoginRequest) (string, error) {
 			return "", errors.New("db error8")
 		}
 	}
-
 	// JWT 토큰 생성
 	tokenString, err := generateJWT(user)
 	if err != nil {
 		return "", err
 	}
+
 	return tokenString, nil
 }
 
