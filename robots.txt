@@ -2,4 +2,4 @@ User-agent: *
 Disallow: /private/
 Allow: /
 
-Sitemap: https://adapfit-plus.com/sitemap.xml
+Sitemap: https://kldga.kr/sitemap.xml

@@ -252,7 +252,10 @@ func (service *adminService) signIn(r SignInRequest) (string, error) {
 		log.Println("db error2")
 		return "", errors.New("db error2")
 	}
-
+	if err := service.db.Unscoped().Where("target = ? ", r.Phone).Delete(&model.VerifiedTarget{}); err != nil {
+		log.Println("db error9")
+		return "", errors.New("db error9")
+	}
 	return "200", nil
 }
 
@@ -318,6 +321,10 @@ func (service *adminService) findId(r FindIdRequest) (string, error) {
 		return "", errors.New("db error2")
 	}
 
+	if err := service.db.Unscoped().Where("target = ? ", r.Phone).Delete(&model.VerifiedTarget{}); err != nil {
+		log.Println("db error9")
+		return "", errors.New("db error9")
+	}
 	return *user.Email, nil
 }
 
@@ -413,6 +420,11 @@ func (service *adminService) changePw(r FindPasswordRequest) (string, error) {
 	if err := service.db.Model(&model.User{}).Where("email = ?", r.Email).UpdateColumn("password", finalPassword).Error; err != nil {
 		log.Println("db error2")
 		return "", errors.New("db error2")
+	}
+
+	if err := service.db.Unscoped().Where("target = ? OR target = ? ", r.Phone, r.Email).Delete(&model.VerifiedTarget{}); err != nil {
+		log.Println("db error9")
+		return "", errors.New("db error9")
 	}
 	return "200", nil
 }

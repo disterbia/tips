@@ -83,13 +83,38 @@ server {
 }
 
 
-인증서 갱신 : 
+인증서 자동갱신 : 
 
+1.기존 certbot.timer 중지 (기본 설정 비활성화)
+systemctl list-timers | grep certbot
+sudo systemctl stop certbot.timer
+sudo systemctl disable certbot.timer
+2.certbot 갱신용 스크립트 만들기
+sudo nano /usr/local/bin/certbot-renew.sh
+#!/bin/bash
+
+# 1. Nginx 중지
+echo "Stopping Nginx..."
 sudo systemctl stop nginx
-sudo certbot renew --dry-run
-sudo nginx -t
-sudo systemctl restart nginx
-sudo certbot renew --webroot -w /var/www/html
+
+# 2. Certbot으로 인증서 갱신
+echo "Renewing SSL certificates..."
+sudo certbot renew
+
+# 3. Nginx 다시 시작
+echo "Starting Nginx..."
+sudo systemctl start nginx
+
+echo "SSL renewal process completed."
+
+저장후 권한추가
+sudo chmod +x /usr/local/bin/certbot-renew.sh
+
+3. 크론탭에 자동 실행 추가 (매일 새벽 1시UTC 실행)
+sudo crontab -e
+0 1 * * * /usr/local/bin/certbot-renew.sh >> /var/log/certbot-renew.log 2>&1
+
+4. 로그확인:cat /var/log/certbot-renew.log
 
 랜딩페이지 :
 
