@@ -63,7 +63,7 @@ server {
 
 server {
     listen 443 ssl;
-    server_name wellkinson.haruharulab.com;
+    server_name wellkinson.haruharulab.com; //지금안씀 구 웰킨슨
 
     ssl_certificate /etc/letsencrypt/live/wellkinson.haruharulab.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/wellkinson.haruharulab.com/privkey.pem;
@@ -119,12 +119,12 @@ sudo crontab -e
 랜딩페이지 :
 
  sudo chmod -R 755 /var/www/wellkinson
-sudo chmod 644 /var/www/wellkinson/sitemap.xml
+sudo chmod 644 /var/www/kldga/sitemap.xml
  sudo chown -R www-data:www-data /var/www/wellkinson
  sudo chown -R ubuntu:ubuntu /var/www/wellkinson
  sudo chown -R www-data:www-data /var/www/wellkinson
- sudo chmod 644 /var/www/wellkinson/robots.txt
- sudo chown www-data:www-data /var/www/wellkinson/robots.txt
+ sudo chmod 644 /var/www/kldga/robots.txt
+ sudo chown www-data:www-data /var/www/kldga/sitemap.xml
 
 
 sudo rm -rf /var/www/wellkinson

@@ -36,11 +36,14 @@ func NewLandingService(conn *grpc.ClientConn, redisClient *redis.Client) Landing
 	}
 }
 func (service *landingService) sendAuthCode(phone string) (string, error) {
+	// ✅ 단일 컨텍스트 생성 (타임아웃 5초 설정)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel() // 함수 종료 시 컨텍스트 해제
 	// 6자리 랜덤 인증번호 생성
 	authCode := fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
 
 	// Redis에 인증번호 저장 (유효시간: 5분)
-	err := service.redisClient.Set(context.Background(), phone, authCode, time.Minute*5).Err()
+	err := service.redisClient.Set(ctx, phone, authCode, time.Minute*5).Err()
 	if err != nil {
 		log.Printf("Failed to save auth code in Redis: %v", err)
 		return "", errors.New("failed to save auth code")
@@ -56,8 +59,12 @@ func (service *landingService) sendAuthCode(phone string) (string, error) {
 }
 
 func (service *landingService) verifyAuthCode(phone string, code string) (string, error) {
+	// ✅ 단일 컨텍스트 생성 (타임아웃 5초 설정)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel() // 함수 종료 시 컨텍스트 해제
+
 	// Redis에서 인증번호 조회
-	storedCode, err := service.redisClient.Get(context.Background(), phone).Result()
+	storedCode, err := service.redisClient.Get(ctx, phone).Result()
 	if err == redis.Nil {
 		return "", errors.New("auth code expired or not found")
 	} else if err != nil {
@@ -68,7 +75,7 @@ func (service *landingService) verifyAuthCode(phone string, code string) (string
 	// 입력된 코드와 비교
 	if storedCode == code {
 		// 인증 성공 시 Redis에 "인증 완료" 상태 플래그 설정
-		err := service.redisClient.Set(context.Background(), phone+":status", "verified", time.Minute*10).Err()
+		err := service.redisClient.Set(ctx, phone+":status", "verified", time.Minute*10).Err()
 		if err != nil {
 			return "", errors.New("failed to set verified status")
 		}
@@ -79,6 +86,10 @@ func (service *landingService) verifyAuthCode(phone string, code string) (string
 }
 
 func (service *landingService) kldgaCompetition(request KldgaCompetitionRequest) (string, error) {
+	// ✅ 단일 컨텍스트 생성 (타임아웃 5초 설정)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel() // 함수 종료 시 컨텍스트 해제
+
 	// 유효성 검사기 생성
 	validate := validator.New()
 
@@ -94,7 +105,7 @@ func (service *landingService) kldgaCompetition(request KldgaCompetitionRequest)
 		return "", errors.New("invalid phone format, should be 01000000000")
 	}
 	// Redis에서 인증 상태 확인
-	status, err := service.redisClient.Get(context.Background(), request.Phone+":status").Result()
+	status, err := service.redisClient.Get(ctx, request.Phone+":status").Result()
 	if err == redis.Nil || status != "verified" {
 		return "", errors.New("phone number not verified")
 	} else if err != nil {
@@ -102,7 +113,7 @@ func (service *landingService) kldgaCompetition(request KldgaCompetitionRequest)
 		return "", errors.New("internal error")
 	}
 
-	reponse, err := service.emailClient.KldgaSendCompetitionEmail(context.Background(), &pb.KldgaCompetitionRequest{
+	reponse, err := service.emailClient.KldgaSendCompetitionEmail(ctx, &pb.KldgaCompetitionRequest{
 		Name:   request.Name,
 		Gender: int32(request.Gender),
 		League: request.League,

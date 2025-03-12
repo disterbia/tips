@@ -43,7 +43,7 @@ func SnsLoginHandler(loginEndpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		response, err := loginEndpoint(context.Background(), req)
+		response, err := loginEndpoint(c.Context(), req)
 		resp := response.(LoginResponse)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -70,7 +70,7 @@ func PhoneLoginHandler(loginEndpoint endpoint.Endpoint) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		response, err := loginEndpoint(context.Background(), req)
+		response, err := loginEndpoint(c.Context(), req)
 		resp := response.(LoginResponse)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
